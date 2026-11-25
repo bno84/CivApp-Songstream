@@ -427,6 +427,7 @@ button:disabled {
   justify-content: center;
   align-items: center;
   min-width: 3.6em;
+  min-height: 28px;
   gap: 5px;
   padding: 5px 10px;
   border: 0;
@@ -978,10 +979,6 @@ button.pill:hover {
 
   .reactions .divider {
     display: none;
-  }
-
-  .open-on-civitai {
-    min-width: 0;
   }
 
   .open-on-civitai span {
