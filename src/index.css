@@ -42,6 +42,14 @@
   box-sizing: border-box;
 }
 
+/* Scrolling that reaches the end of the app stops there rather than moving
+   Civitai's page (see src/viewport.ts for the wheel). */
+html,
+body {
+  /* eslint-disable-next-line css/use-baseline -- progressive: the wheel guard in viewport.ts covers the rest */
+  overscroll-behavior: none;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -583,6 +591,8 @@ kbd {
 /* Quiet scrollbars. Progressive: a browser without these keeps its own. */
 .queue,
 .details {
+  /* eslint-disable-next-line css/use-baseline -- progressive, see above */
+  overscroll-behavior: contain;
   /* eslint-disable-next-line css/use-baseline -- progressive, see above */
   scrollbar-width: thin;
   /* eslint-disable-next-line css/use-baseline -- progressive, see above */
