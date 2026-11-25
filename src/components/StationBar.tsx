@@ -8,13 +8,15 @@ import { SourceNote } from './SourceNote.js';
 export interface Station {
   id: number;
   name: string;
-  /** The default station, marked with a star. */
-  featured?: boolean;
+  /** The default station (starred), one of the viewer's own collections, or one opened by link. */
+  source: 'featured' | 'mine' | 'link';
 }
 
 /** The playlists across the top: the featured one, the viewer's collections, and any opened by link. */
-export function StationBar({ stations, selected, onSelect, onOpen, status }: {
+export function StationBar({ stations, selected, onSelect, onOpen, onForget, status }: {
   stations: Station[];
+  /** Removes a station opened by link from the bar and from memory. */
+  onForget: (id: number) => void;
   /** Loading or failing to load the selected playlist, when the stage cannot say so. */
   status: { text: string; error: boolean } | null;
   selected: number;
@@ -43,13 +45,23 @@ export function StationBar({ stations, selected, onSelect, onOpen, status }: {
     <header className="station-bar">
       <span className="brand">civitai <b>radio</b></span>
       <nav className="stations" aria-label="Playlists">
-        {stations.map(station => (
-          <button key={station.id} type="button" className={`chip${station.id === selected ? ' on' : ''}`}
-            aria-pressed={station.id === selected} onClick={() => onSelect(station.id)}>
-            {station.featured && <span aria-hidden="true">★ </span>}
-            {station.name}
-          </button>
-        ))}
+        {stations.map(station => {
+          const chip = (
+            <button key={station.id} type="button" className={`chip${station.id === selected ? ' on' : ''}`}
+              aria-pressed={station.id === selected} onClick={() => onSelect(station.id)}>
+              {station.source === 'featured' && <span aria-hidden="true">★ </span>}
+              {station.name}
+            </button>
+          );
+          if (station.source !== 'link') return chip;
+          return (
+            <span key={station.id} className="chip-group">
+              {chip}
+              <button type="button" className="chip-forget" onClick={() => onForget(station.id)}
+                aria-label={`Forget ${station.name}`} title={`Forget ${station.name}`}>×</button>
+            </span>
+          );
+        })}
         {adding ? (
           <form className="add-station" onSubmit={submit}>
             <input autoFocus value={text} placeholder="Collection link or number" aria-label="Collection link or number"

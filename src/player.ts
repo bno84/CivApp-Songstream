@@ -59,15 +59,31 @@ export interface Player {
   };
 }
 
+/** How the player starts: shuffle, repeat and volume, as remembered. */
+export interface PlayerStart {
+  shuffle?: boolean;
+  repeat?: Repeat;
+  volume?: number;
+  muted?: boolean;
+}
+
 export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
-  { shuffle = true, repeat = 'all' }: { shuffle?: boolean; repeat?: Repeat } = {}): Player {
+  { shuffle = true, repeat = 'all', volume: startVolume = 1, muted: startMuted = false }: PlayerStart = {}): Player {
   const [queue, setQueue] = useState<Queue<Track>>(() => createQueue<Track>([], { shuffle, repeat }));
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [durations, setDurations] = useState<ReadonlyMap<number, number>>(() => new Map());
   const [failed, setFailed] = useState<number | null>(null);
-  const [volume, setVolume] = useState(1);
-  const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(startVolume);
+  const [muted, setMuted] = useState(startMuted);
+  // The element starts at full volume; give it the remembered one, once.
+  const [start] = useState({ volume: startVolume, muted: startMuted });
+  useEffect(() => {
+    const media = mediaRef.current;
+    if (!media) return;
+    media.volume = start.volume;
+    media.muted = start.muted;
+  }, [mediaRef, start]);
 
   const track = current(queue);
   const trackId = track?.id ?? null;

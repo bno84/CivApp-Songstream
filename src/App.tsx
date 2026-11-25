@@ -6,8 +6,9 @@ import { useBlockContext, useBlockResize, useRequestSignIn } from '@civitai/bloc
 import type { ApiClient } from './api.js';
 import { Radio } from './components/Radio.js';
 import { SourceNote } from './components/SourceNote.js';
+import type { Memory } from './memory.js';
 
-export function App({ api }: { api: ApiClient }) {
+export function App({ api, memory }: { api: ApiClient; memory: Memory }) {
   const { ready, viewer, theme } = useBlockContext();
   const { requestSignIn } = useRequestSignIn();
   const rootRef = useRef<HTMLElement>(null);
@@ -30,7 +31,7 @@ export function App({ api }: { api: ApiClient }) {
       </div>
     );
   } else {
-    body = <Radio api={api} />;
+    body = <Radio api={api} memory={memory} />;
   }
 
   return (

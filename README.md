@@ -21,7 +21,13 @@ Media control button support, playlists, shuffle.
   them inside the app frame, plus keyboard shortcuts: Space plays and pauses,
   ←/→ seek, Shift+←/→ skip.
 
-It asks only for `collections:read:self`, so there is no consent prompt.
+- **Remembers** your volume, shuffle and repeat, the playlist you had on, and
+  up to eight collections you opened by link (hover one to forget it). Only you
+  can see them.
+
+It asks only for `collections:read:self` and `apps:storage`, so there is no
+consent prompt. Remembering starts working once Civitai approves the app; until
+then each visit starts fresh.
 
 ## Limits
 

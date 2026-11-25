@@ -194,6 +194,39 @@ button:disabled {
   box-shadow: inset 0 0 0 1px var(--accent-line);
 }
 
+.chip-group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.chip-forget {
+  width: 20px;
+  height: 20px;
+  margin-left: -22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--dim);
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0;
+}
+
+/* Room for the ×, which shows on hover or keyboard focus inside the chip's right edge. */
+.chip-group .chip {
+  padding-right: 26px;
+}
+
+.chip-group:hover .chip-forget,
+.chip-forget:focus-visible {
+  opacity: 1;
+}
+
+.chip-forget:hover {
+  color: var(--text);
+}
+
 .add-station {
   display: flex;
   align-items: center;

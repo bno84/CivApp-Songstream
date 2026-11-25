@@ -4,12 +4,23 @@
   "version": "0.1.0",
   "name": "Civitai Radio",
   "tagline": "Play Civitai collections like a music player.",
-  "description": "Civitai Radio plays the videos in a Civitai collection one after another, like a music player. It starts with the Music Focus collection. Your own collections appear beside it, and any public collection opens from its link.\n\nShuffle and repeat, a queue that shows what already played, keyboard shortcuts, and media keys and lock-screen controls where your browser allows them. The Details tab shows how the current video was made: its prompt, settings and resources. Reaction counts and comments link back to Civitai.\n\nThe app only reads collections. It never changes them, and it remembers nothing between visits.",
+  "description": "Civitai Radio plays the videos in a Civitai collection one after another, like a music player. It starts with the Music Focus collection. Your own collections appear beside it, and any public collection opens from its link.\n\nShuffle and repeat, a queue that shows what already played, keyboard shortcuts, and media keys and lock-screen controls where your browser allows them. The Details tab shows how the current video was made: its prompt, settings and resources. Reaction counts and comments link back to Civitai.\n\nIt remembers your volume, shuffle and repeat, the playlist you had on, and collections you opened by link. Only you can see these, and you can empty them from your Civitai account settings.\n\nThe app only reads collections. It never changes them.",
   "type": "block",
   "category": "discovery",
   "scopes": [
-    "collections:read:self"
+    "collections:read:self",
+    "apps:storage"
   ],
+  "storage": {
+    "collections": {
+      "prefs": {
+        "visibility": "private"
+      },
+      "recent_collections": {
+        "visibility": "private"
+      }
+    }
+  },
   "page": {
     "path": "/",
     "title": "Civitai Radio",

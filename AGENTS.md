@@ -19,7 +19,13 @@
   Details tab uses the public `/api/v1/images`, `/posts/{id}` and
   `/model-versions/{id}` routes, without the block token.
 - Logic lives in React-free, tested modules: `queue.ts` (play order, shuffle,
-  repeat), `info.ts` (per-track details store), `media.ts`, `track.ts`.
+  repeat), `info.ts` (per-track details store), `memory.ts` (what is remembered
+  between visits), `media.ts`, `track.ts`.
+- `src/memory.ts` runs on the `blocks-react` token, not a bare `initialize()`,
+  and falls back to in-memory on any refusal: the store refuses until the app
+  is approved. Storage collection names allow only `[a-z0-9_]`; renaming one,
+  or changing its visibility, starts it empty. Settings writes are batched
+  (the private-write limit is 120 a minute).
   `player.ts` is the hook over the one `<video>` element, which stays mounted
   across tracks; `controls.ts` adds media keys and the keyboard.
 - Pass the media element's ref beside the player object, never inside it: the
