@@ -29,8 +29,9 @@ export function NowPlaying({ track, title, info, reactTicket, starred, toggleFav
 }) {
   const { scopes } = useBlockToken();
   const { requestConsent } = useRequestConsent();
-  const { refusal, reset } = useConsentUnavailable();
+  const { refusal } = useConsentUnavailable();
   const granted = scopes.includes(REACT_SCOPE);
+  const permissionUnavailable = !granted && refusal?.reason === 'ungrantable';
   const reactId = track?.id;
   const reactions = useReactions('image', granted && reactId && reactTicket ? [reactId] : [],
     { tickets: reactId && reactTicket ? { [reactId]: reactTicket } : {} });
@@ -41,12 +42,8 @@ export function NowPlaying({ track, title, info, reactTicket, starred, toggleFav
   const stats = info?.status === 'ready' ? info.stats : null;
   const reactionState = granted && reactTicket ? reactions.byId[track.id] : undefined;
   const reactionCounts = reactionState?.statsUnknown ? undefined : reactionState?.counts;
-  const requestPermission = () => {
-    reset();
-    requestConsent({ scopes: [REACT_SCOPE] });
-  };
-  const error = !granted && refusal?.scopes.includes(REACT_SCOPE) ? 'Reaction permission is unavailable here.'
-    : failure?.id === track.id ? failure.text : null;
+  const requestPermission = () => requestConsent({ scopes: [REACT_SCOPE] });
+  const error = failure?.id === track.id ? failure.text : null;
   return (
     <div className="now-playing">
       <div className="now-title">
@@ -72,7 +69,7 @@ export function NowPlaying({ track, title, info, reactTicket, starred, toggleFav
           return (
             <button key={key} type="button" className="pill" aria-label={`${reaction} on Civitai (${label})`}
               aria-pressed={reacted} title={granted ? label : 'Allow Civitai reactions'}
-              disabled={granted && (!reactionState || reactions.pending(track.id, reaction))}
+              disabled={permissionUnavailable || (granted && (!reactionState || reactions.pending(track.id, reaction)))}
               onClick={() => {
                 setFailure(null);
                 if (!granted) {
