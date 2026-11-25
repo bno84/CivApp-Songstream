@@ -3,8 +3,8 @@ import { useState } from 'react';
 
 import type { Info } from '../info.js';
 import { formatCount } from '../media.js';
-import { useOpen } from '../open.js';
 import { imagePath, profilePath, type Track } from '../track.js';
+import { CivitaiLink } from './CivitaiLink.js';
 import { Icon } from './Icon.js';
 
 const REACTIONS = [
@@ -16,7 +16,6 @@ const REACTIONS = [
 
 /** Title, creator, reaction counts and the ways out to Civitai, under the video. */
 export function NowPlaying({ track, title, info }: { track: Track | null; title: string; info: Info | undefined }) {
-  const open = useOpen();
   if (!track) return <div className="now-playing" />;
   const creator = track.creator?.username ?? null;
   const creatorPath = profilePath(creator);
@@ -26,12 +25,11 @@ export function NowPlaying({ track, title, info }: { track: Track | null; title:
       <div className="now-title">
         <h2 className="clamp-2" title={title}>{title}</h2>
         {creator && (
-          <button type="button" className="creator" onClick={() => creatorPath && open(creatorPath)}
-            title={`${creator} on Civitai`}>
+          <CivitaiLink path={creatorPath ?? imagePath(track.id)} className="creator" title={`${creator} on Civitai`}>
             <Avatar key={info?.status === 'ready' ? info.avatar : null} name={creator}
               src={info?.status === 'ready' ? info.avatar : null} />
             {creator}
-          </button>
+          </CivitaiLink>
         )}
       </div>
       <div className="reactions">
@@ -43,13 +41,12 @@ export function NowPlaying({ track, title, info }: { track: Track | null; title:
           </span>
         ))}
         <span className="divider" aria-hidden="true" />
-        <button type="button" className="pill" onClick={() => open(imagePath(track.id))}
-          title="Comments open on Civitai">
+        <CivitaiLink path={imagePath(track.id)} className="pill" title="Comments open on Civitai">
           <Icon name="comment" size={16} /> {stats ? formatCount(stats.commentCount ?? 0) : '·'}
-        </button>
-        <button type="button" className="pill" onClick={() => open(imagePath(track.id))}>
+        </CivitaiLink>
+        <CivitaiLink path={imagePath(track.id)} className="pill">
           Open on Civitai <Icon name="external" size={14} />
-        </button>
+        </CivitaiLink>
       </div>
     </div>
   );

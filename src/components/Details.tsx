@@ -3,13 +3,12 @@ import { useState } from 'react';
 
 import type { InfoStore } from '../info.js';
 import { formatCount } from '../media.js';
-import { useOpen } from '../open.js';
 import { imagePath, type Track } from '../track.js';
+import { CivitaiLink } from './CivitaiLink.js';
 import { Icon } from './Icon.js';
 
 /** The current item's generation data, as Civitai's image sidebar shows it. */
 export function Details({ track, infos }: { track: Track | null; infos: InfoStore }) {
-  const open = useOpen();
   if (!track) return <p className="panel-note">Nothing playing.</p>;
   const info = infos.get(track.id);
   const comments = info?.status === 'ready' ? info.stats.commentCount ?? 0 : null;
@@ -46,9 +45,9 @@ export function Details({ track, infos }: { track: Track | null; infos: InfoStor
                 <li key={i}>
                   <span className="tag">{resource.type}</span>
                   {resource.path ? (
-                    <button type="button" className="link ellipsis" onClick={() => open(resource.path!)}>
+                    <CivitaiLink path={resource.path} className="link ellipsis">
                       {resource.name}
-                    </button>
+                    </CivitaiLink>
                   ) : (
                     <span className="ellipsis">{resource.name}</span>
                   )}
@@ -65,14 +64,14 @@ export function Details({ track, infos }: { track: Track | null; infos: InfoStor
   return (
     <div className="details">
       {body}
-      <button type="button" className="comments-note" onClick={() => open(imagePath(track.id))}>
+      <CivitaiLink path={imagePath(track.id)} className="comments-note">
         <Icon name="comment" size={16} />
         <span>
           {comments == null ? 'Comments' : `${formatCount(comments)} comment${comments === 1 ? '' : 's'}`}.
           Apps cannot show comments yet, so this <strong>opens them on Civitai</strong>.
         </span>
         <Icon name="external" size={14} />
-      </button>
+      </CivitaiLink>
     </div>
   );
 }
