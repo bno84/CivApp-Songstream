@@ -1,0 +1,25 @@
+{
+  "$schema": "https://civitai.com/schemas/app-block/v1.json",
+  "blockId": "civradio",
+  "version": "0.1.0",
+  "name": "Civitai Radio",
+  "tagline": "Civitai Radio - a Civitai app",
+  "type": "block",
+  "scopes": [],
+  "page": {
+    "path": "/",
+    "title": "Civitai Radio",
+    "icon": "bolt"
+  },
+  "iframe": {
+    "minHeight": 600,
+    "maxHeight": 4000,
+    "resizable": true,
+    "sandbox": "allow-scripts allow-forms"
+  },
+  "contentRating": "g",
+  "bootSkeleton": true,
+  "minApiVersion": "1.0",
+  "buildCommand": "pnpm run build",
+  "outputDir": "dist"
+}

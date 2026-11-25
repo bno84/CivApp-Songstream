@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "civitai": {
+      "headers": {
+        "Authorization": "Bearer ${CIVITAI_TOKEN}"
+      },
+      "type": "http",
+      "url": "https://mcp.civitai.com/mcp"
+    },
+    "civitai-orchestration": {
+      "headers": {
+        "Authorization": "Bearer ${CIVITAI_TOKEN}"
+      },
+      "type": "http",
+      "url": "https://orchestration.civitai.com/mcp/v2"
+    }
+  }
+}

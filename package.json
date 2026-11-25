@@ -1,0 +1,30 @@
+{
+  "name": "civradio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:tunnel": "CIVITAI_DEV_TUNNEL_HMR=1 vite --host localhost --port 5186 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@civitai/cli": "^0.1.152",
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.7"
+  },
+  "description": "Civitai Radio: a Civitai app that feels like a music player. Media control button support, playlists, shuffle.",
+  "packageManager": "pnpm@12.3.4",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.3.4",
+      "onFail": "download"
+    }
+  }
+}

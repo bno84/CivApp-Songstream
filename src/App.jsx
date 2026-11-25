@@ -1,0 +1,30 @@
+import { useState } from 'react';
+
+// Civitai Radio — Civitai App (vite + React page template).
+//
+// The host serves this bundle in a sandboxed iframe and communicates over
+// window.postMessage. Every block -> host message is an envelope:
+// `{ type: 'SOME_TYPE', payload: { … } }` — the host reads `event.data.payload`,
+// so fields put at the top level are dropped.
+//
+// The ONE message a page app must send is `BLOCK_READY`; without it the host
+// never reveals the app. `src/civitai-host.js` (imported by `src/main.jsx`)
+// already does that. See the App SDK for the rest of the protocol and scopes.
+export default function App() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <main className="app">
+      <h1>Civitai Radio</h1>
+      <p>A Civitai App built with Vite + React.</p>
+      {/* THE RESPONSIVE EXAMPLE. These two buttons stack on a narrow block and
+          sit side by side once there is room. The switch lives in
+          src/index.css (`.app-actions` + the `@container` rule) — read the
+          comments there before adding a `@media` query of your own. */}
+      <div className="app-actions">
+        <button onClick={() => setCount((c) => c + 1)}>count is {count}</button>
+        <button onClick={() => setCount(0)}>reset</button>
+      </div>
+    </main>
+  );
+}
