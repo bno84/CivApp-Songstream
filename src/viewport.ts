@@ -13,8 +13,14 @@
 // the visible height, which is published as `--visible-height` on <html> for
 // the CSS to use. The harness, where the frame is the whole window, measures
 // the full height, so nothing changes there.
+//
+// Civitai's bottom bar is drawn over the page rather than beside it, so the
+// observer cannot see it. When the frame runs past the bottom of the screen,
+// which is how Civitai embeds it, the bar's height is kept clear as well.
 
 const STEPS = 200;
+/** Civitai's bottom bar (about 36px) and a little air. Not measurable from inside the frame. */
+const HOST_BAR = 40;
 
 export function fitToVisibleHeight(root: HTMLElement = document.documentElement): () => void {
   if (typeof IntersectionObserver === 'undefined') return () => {};
@@ -31,7 +37,9 @@ export function fitToVisibleHeight(root: HTMLElement = document.documentElement)
     // Measured only while the frame's top is on screen. Once the page around
     // the frame scrolls, the last fit is kept rather than shrinking the app.
     if (top > 1) return;
-    root.style.setProperty('--visible-height', `${Math.floor(Math.min(bottom, window.innerHeight))}px`);
+    const clipped = bottom < window.innerHeight - 1;
+    const height = clipped ? bottom - HOST_BAR : window.innerHeight;
+    root.style.setProperty('--visible-height', `${Math.floor(height)}px`);
   }, { threshold: Array.from({ length: STEPS + 1 }, (_, i) => i / STEPS) });
   observer.observe(probe);
 
