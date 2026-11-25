@@ -973,8 +973,17 @@ button.pill:hover {
   }
 
   .volume {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 100px) minmax(0, 1fr);
     width: 100%;
-    justify-content: center;
+  }
+
+  .volume .icon-button {
+    justify-self: end;
+  }
+
+  .volume-slider {
+    width: 100%;
   }
 
   .reactions .divider {
