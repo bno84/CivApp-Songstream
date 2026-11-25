@@ -5,7 +5,6 @@
   "name": "Civitai Radio",
   "tagline": "Play Civitai collections like a music player.",
   "description": "Civitai Radio plays the videos in a Civitai collection one after another, like a music player. It starts with the Music Focus collection. Your own collections appear beside it, and any public collection opens from its link.\n\nShuffle and repeat, a queue that shows what already played, keyboard shortcuts, and media keys and lock-screen controls where your browser allows them. The Details tab shows how the current video was made: its prompt, settings and resources. Reaction counts and comments link back to Civitai.\n\nThe app only reads collections. It never changes them, and it remembers nothing between visits.",
-  "repository": "https://github.com/bno84/CivApp-CivRadio",
   "type": "block",
   "category": "discovery",
   "scopes": [

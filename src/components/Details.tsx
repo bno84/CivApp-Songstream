@@ -3,7 +3,6 @@ import { useState } from 'react';
 
 import type { InfoStore } from '../info.js';
 import { formatCount } from '../media.js';
-import { copyText } from '../clipboard.js';
 import { useOpen } from '../open.js';
 import { imagePath, type Track } from '../track.js';
 import { Icon } from './Icon.js';
@@ -99,4 +98,29 @@ function Prompt({ label, text, collapsed = false }: { label: string; text: strin
       {content}
     </details>
   );
+}
+
+/**
+ * Copies text. The async clipboard needs a permission the host's iframe may not
+ * delegate; the older selection copy works from a click in most browsers.
+ */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.append(area);
+    area.select();
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    } finally {
+      area.remove();
+    }
+  }
 }
