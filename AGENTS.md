@@ -14,10 +14,16 @@
 - `@civitai/blocks-react` is the host bridge (context, token, resize, harness).
   The app does NOT call `injectBlocksStyles()`: Civitai Radio has its own look,
   not the design-system pack's. Keep the host theme (`data-theme`) working.
-- Keep network code in one module (as Collectalytics does in `src/api.ts`).
-  Collection items come from `GET /api/v1/blocks/collections/{id}` with
-  `collections:read:self`. Media lists come from `GET /api/v1/images`
-  (`type=video|audio`).
+- `src/api.ts` is the only network code. Collection items come from
+  `GET /api/v1/blocks/collections/{id}` with `collections:read:self`; the
+  Details tab uses the public `/api/v1/images`, `/posts/{id}` and
+  `/model-versions/{id}` routes, without the block token.
+- Logic lives in React-free, tested modules: `queue.ts` (play order, shuffle,
+  repeat), `info.ts` (per-track details store), `media.ts`, `track.ts`.
+  `player.ts` is the hook over the one `<video>` element, which stays mounted
+  across tracks; `controls.ts` adds media keys and the keyboard.
+- Pass the media element's ref beside the player object, never inside it: the
+  React Compiler lint treats every property of an object holding a ref as a ref.
 - Playlists are the viewer's own Civitai collections. The document store is a
   stop-gap only, for what Civitai cannot hold yet. Record each gap in an
   upstream wishlist instead of building around it silently.

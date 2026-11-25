@@ -1,51 +1,125 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Civitai Radio, "Clean dark": near-black surfaces, big media, one coral accent
+   for what is active and playing. Desktop first: the wide layout is the base and
+   `@container app (max-width: …)` folds it down for narrow frames. */
+
 :root {
-  /* DARK FIRST, matching `<meta name="color-scheme" content="dark light">` in
-     index.html. This property OVERRIDES the meta once the bundle lands, so the
-     two orders have to agree — `light dark` here would quietly undo the boot
-     skeleton's dark default at exactly the moment the app takes over. */
+  /* Dark first, matching `<meta name="color-scheme" content="dark light">` in
+     index.html; `light dark` here would undo the boot skeleton's dark default. */
   color-scheme: dark light;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --bg: #121214;
+  --surface: #18181b;
+  --surface-2: #222226;
+  --sunken: #0b0b0d;
+  --line: #2a2a30;
+  --text: #ececef;
+  --dim: #9a9aa3;
+  --accent: #ff6b4a;
+  --accent-text: #ff8c70;
+  --accent-soft: rgb(255 107 74 / 0.13);
+  --accent-line: rgb(255 107 74 / 0.4);
+  --on-accent: #121214;
+  --radius: 12px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+[data-theme='light'] {
+  --bg: #f6f6f8;
+  --surface: #ffffff;
+  --surface-2: #ececf0;
+  --sunken: #1a1a1e;
+  --line: #dcdce2;
+  --text: #1a1a1e;
+  --dim: #63636d;
+  --accent: #e8502e;
+  --accent-text: #c2401f;
+  --accent-soft: rgb(232 80 46 / 0.1);
+  --accent-line: rgb(232 80 46 / 0.4);
+  --on-accent: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-}
-
-.app {
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-
-  /* WIDTH-ADAPTIVE LAYOUT — a CONTAINER query, not a viewport media query.
-     Your block renders inside whatever slot the host gave it, and SLOT WIDTH IS
-     NOT MONOTONIC IN VIEWPORT WIDTH: the `model.sidebar_top` slot is ~360px on a
-     phone and only ~430px on a 1440px desktop. A viewport-based media query
-     inside the frame therefore answers a question nobody asked, which is why
-     this file has none. `container-type: inline-size` makes this element a query
-     container, so `@container block (min-width: 480px)` asks about the real box.
-     Write breakpoints as numbers (480/768/1024…): `var(--civitai-bp-*)` in a
-     query condition never matches. */
-  container-type: inline-size;
-  container-name: block;
+  background: var(--bg);
+  color: var(--text);
 }
 
 button {
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  border: 1px solid currentColor;
-  background: transparent;
-  cursor: pointer;
   font: inherit;
+  color: inherit;
+  cursor: pointer;
 }
 
-.dimmed {
-  opacity: 0.7;
+button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ellipsis {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* -- Frame ---------------------------------------------------------------- */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding: 16px 20px 6px;
+  background: var(--bg);
+  container: app / inline-size;
+}
+
+.radio {
+  display: flex;
+  flex-direction: column;
+  /* The page fills the frame; the queue scrolls inside it, not the page. */
+  height: calc(100dvh - 48px);
+  min-height: 560px;
+}
+
+.radio-main {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 20px;
+  min-height: 0;
+}
+
+.player-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.center-note {
+  display: grid;
+  flex: 1;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  color: var(--dim);
 }
 
 .footer {
-  margin-top: 1.5rem;
-  font-size: 0.875rem;
+  padding: 8px 0 4px;
+  color: var(--dim);
+  font-size: 12px;
   text-align: center;
 }
 
@@ -54,4 +128,656 @@ button {
   /* eslint-disable-next-line css/use-baseline -- progressive: a plain selection still works */
   user-select: all;
   overflow-wrap: anywhere;
+}
+
+/* -- Stations ------------------------------------------------------------- */
+
+.station-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.brand {
+  flex: none;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.brand b {
+  color: var(--accent);
+}
+
+.stations {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.chip.on {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+
+.add-station {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.add-station input {
+  width: 260px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.form-error {
+  color: var(--accent-text);
+  font-size: 12px;
+}
+
+/* -- Stage ---------------------------------------------------------------- */
+
+.stage {
+  position: relative;
+  display: grid;
+  flex: 1 1 auto;
+  place-items: center;
+  min-height: 220px;
+  max-height: 60vh;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--sunken);
+}
+
+/* The poster, blurred, behind letterboxing, so a portrait video or cover art
+   fills the frame without the layout jumping. */
+.stage-backdrop {
+  position: absolute;
+  inset: -40px;
+  background-position: center;
+  background-size: cover;
+  filter: blur(36px) brightness(0.45);
+}
+
+.stage-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.stage-play {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  padding-left: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.45);
+}
+
+.stage-note {
+  position: relative;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.6);
+  color: #ececef;
+  font-size: 14px;
+}
+
+/* -- Now playing ---------------------------------------------------------- */
+
+.now-playing {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 58px;
+}
+
+.now-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.now-title h2 {
+  margin: 0 0 4px;
+  font-size: 21px;
+  line-height: 1.25;
+}
+
+.creator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dim);
+  font-size: 14px;
+}
+
+.creator:hover {
+  color: var(--text);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2bd9b0, #6a2bd9);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reactions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+button.pill:hover {
+  background: var(--line);
+}
+
+.divider {
+  width: 1px;
+  height: 22px;
+  margin: 0 4px;
+  background: var(--line);
+}
+
+/* -- Controls ------------------------------------------------------------- */
+
+.controls {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.time {
+  min-width: 3.2em;
+  color: var(--dim);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.time:last-child {
+  text-align: right;
+}
+
+.slider {
+  flex: 1;
+  height: 16px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+}
+
+.slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) var(--fill, 0%), var(--line) var(--fill, 0%));
+}
+
+.slider::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) var(--fill, 0%), var(--line) var(--fill, 0%));
+}
+
+.slider::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+  appearance: none;
+}
+
+.slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.slider:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.control-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.keys {
+  display: flex;
+  gap: 6px;
+}
+
+kbd {
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--dim);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.icon-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--text);
+}
+
+.icon-button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.icon-button.on {
+  color: var(--accent);
+}
+
+.repeat-one {
+  position: absolute;
+  top: 5px;
+  right: 4px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.play-button {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.volume {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.volume-slider {
+  flex: 0 1 100px;
+}
+
+.load-note {
+  min-height: 1.4em;
+  margin: -4px 0 0;
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.load-note.error {
+  color: var(--accent-text);
+}
+
+/* -- Panel ---------------------------------------------------------------- */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.tabs {
+  display: flex;
+  gap: 18px;
+  padding: 12px 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs button {
+  padding: 0 0 9px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--dim);
+  font-size: 13px;
+}
+
+.tabs button.on {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.panel-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panel-note {
+  margin: 0;
+  padding: 16px;
+  color: var(--dim);
+}
+
+.queue {
+  flex: 1;
+  margin: 0;
+  padding: 8px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.queue-row button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  text-align: left;
+}
+
+.queue-row button:hover {
+  background: var(--surface-2);
+}
+
+.queue-row.played {
+  opacity: 0.4;
+}
+
+.queue-row.current button {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+
+.thumb {
+  flex: none;
+  width: 64px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.queue-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.queue-sub {
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.now-badge {
+  flex: none;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+/* -- Details -------------------------------------------------------------- */
+
+.details {
+  flex: 1;
+  padding: 14px 16px;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.section-label {
+  margin: 0 0 8px;
+  color: var(--dim);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.collapsible {
+  margin-bottom: 12px;
+}
+
+.collapsible summary {
+  cursor: pointer;
+}
+
+.prompt {
+  position: relative;
+  margin-bottom: 14px;
+  padding: 10px 64px 10px 12px;
+  border-radius: 8px;
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+.prompt p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--dim);
+  font-size: 11px;
+}
+
+.settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  margin: 0 0 16px;
+}
+
+.settings dt {
+  color: var(--dim);
+  font-size: 11px;
+}
+
+.settings dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.resources {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.resources li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.tag {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-size: 11px;
+}
+
+.link {
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.link:hover {
+  color: var(--accent-text);
+  text-decoration: underline;
+}
+
+.weight {
+  margin-left: auto;
+  color: var(--dim);
+}
+
+.comments-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: none;
+  font-size: 13px;
+  text-align: left;
+}
+
+.comments-note span {
+  flex: 1;
+}
+
+/* -- Narrower frames ------------------------------------------------------ */
+
+/* Below 1024px the panel narrows; below 768px everything stacks and the page
+   scrolls as one. Container queries ask about the frame, not the viewport. */
+@container app (max-width: 1024px) {
+  .radio-main {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+
+  .now-playing {
+    flex-wrap: wrap;
+  }
+
+  .keys {
+    visibility: hidden;
+  }
+}
+
+@container app (max-width: 768px) {
+  .radio {
+    height: auto;
+    min-height: 0;
+  }
+
+  .radio-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stage {
+    flex: none;
+    aspect-ratio: 16 / 9;
+    max-height: none;
+  }
+
+  .panel {
+    height: 480px;
+  }
+
+  .reactions {
+    flex-wrap: wrap;
+  }
+
+  .control-row {
+    grid-template-columns: auto 1fr;
+  }
+
+  .keys {
+    display: none;
+  }
+
+  .add-station input {
+    width: 180px;
+  }
 }

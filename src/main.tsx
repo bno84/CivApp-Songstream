@@ -1,20 +1,42 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { StrictMode, type ReactNode } from 'react';
+import { StrictMode, useMemo, useRef, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { useBlockToken, useHostOrigin } from '@civitai/blocks-react';
+
 import { App } from './App.js';
+import { createHttpClient } from './api.js';
 import './index.css';
 
 // No injectBlocksStyles(): Civitai Radio has its own look rather than the
 // design-system pack's. blocks-react is used for the host bridge only.
 
+/** The real API, on the validated host origin, with the host-minted block token. */
+function LiveApp() {
+  const origin = useHostOrigin();
+  const token = useBlockToken();
+  // Read at request time, so a refreshed token is used without rebuilding the
+  // client. The client reads the ref only inside request callbacks, never
+  // during render, so this latest-value ref is safe.
+  /* eslint-disable react-hooks/refs */
+  const tokenRef = useRef(token);
+  tokenRef.current = token;
+  const api = useMemo(() => createHttpClient({
+    origin: origin ?? window.location.origin,
+    getToken: () => tokenRef.current.raw || undefined,
+    refreshToken: () => tokenRef.current.refresh(),
+  }), [origin]);
+  /* eslint-enable react-hooks/refs */
+  return <App api={api} />;
+}
+
 async function mount(): Promise<ReactNode> {
-  // `pnpm run dev:harness`: a mock host, never in production.
+  // `pnpm run dev:harness`: a mock host and sample playlists, never in production.
   if (import.meta.env.DEV && import.meta.env.VITE_DEV_HARNESS === 'true') {
     const { HarnessApp } = await import('./dev/harness.js');
     return <HarnessApp />;
   }
-  return <App />;
+  return <LiveApp />;
 }
 
 const container = document.getElementById('root');

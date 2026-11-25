@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useEffect, useRef } from 'react';
 
-import { useBlockContext, useBlockResize } from '@civitai/blocks-react';
+import { useBlockContext, useBlockResize, useRequestSignIn } from '@civitai/blocks-react';
+
+import type { ApiClient } from './api.js';
+import { Radio } from './components/Radio.js';
 
 const SOURCE_URL = 'https://github.com/bno84/CivApp-CivRadio';
 
-/** The app shell. The player itself lands once its visual direction is chosen. */
-export function App() {
+export function App({ api }: { api: ApiClient }) {
   const { ready, viewer, theme } = useBlockContext();
+  const { requestSignIn } = useRequestSignIn();
   const rootRef = useRef<HTMLElement>(null);
   useBlockResize(rootRef);
 
@@ -16,19 +19,27 @@ export function App() {
     if (ready) document.documentElement.dataset.theme = theme;
   }, [ready, theme]);
 
+  let body;
+  if (!ready) {
+    body = <p className="center-note">Tuning in…</p>;
+  } else if (!viewer) {
+    body = (
+      <div className="center-note">
+        <p>Sign in to Civitai to play collections.</p>
+        <button type="button" className="chip on" onClick={() => requestSignIn()}>Sign in</button>
+      </div>
+    );
+  } else {
+    body = <Radio api={api} />;
+  }
+
   return (
     <main ref={rootRef} className="app" data-theme={theme}>
-      <header>
-        <h1>Civitai Radio</h1>
-        <p className="dimmed">
-          {!ready ? 'Tuning in…' : viewer ? `Hi ${viewer.username}. The player is on its way.` : 'The player is on its way.'}
-        </p>
-      </header>
+      {body}
       {/* AGPL-3.0 §13: offer the source to everyone who uses the app. The
           sandbox allows no popups, so the URL is plain selectable text. */}
-      <footer className="footer dimmed">
-        Free software under AGPL-3.0-or-later. Source:{' '}
-        <span className="source-url">{SOURCE_URL}</span>
+      <footer className="footer">
+        Free software under AGPL-3.0-or-later. Source: <span className="source-url">{SOURCE_URL}</span>
       </footer>
     </main>
   );

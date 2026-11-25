@@ -35,10 +35,10 @@
       html {
         /* The strong guarantee. Unlike `color-scheme` this does not depend on
            UA support for anything. */
-        background: #101113;
+        background: #121214;
       }
       html[data-theme='light'] {
-        background: #ffffff;
+        background: #f6f6f8;
       }
       body {
         margin: 0;
@@ -46,14 +46,14 @@
       /* Mirrors `.app` in src/index.css so the skeleton occupies the same box
          the real first render does. */
       [data-boot-skeleton] {
-        max-width: 40rem;
+        max-width: none;
         margin: 0 auto;
-        padding: 2rem 1.5rem;
+        padding: 16px 20px;
       }
       /* Attribute selectors, not classes: a class is fair game for CSS-modules
          hashing or a purge pass, an attribute survives the bundler. */
       [data-boot-skeleton] [data-boot-shape] {
-        background: #2c2e33;
+        background: #222226;
         border-radius: 6px;
       }
       [data-boot-skeleton] [data-boot-shape='title'] {
@@ -71,7 +71,7 @@
         width: 9rem;
       }
       html[data-theme='light'] [data-boot-skeleton] [data-boot-shape] {
-        background: #e9ecef;
+        background: #ececf0;
       }
     </style>
     <script>

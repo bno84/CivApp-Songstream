@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+import { describe, expect, it } from 'vitest';
+
+import { formatCount, formatTime, stillUrl } from './media.js';
+
+const CDN = 'https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/0b1c2d3e-uuid/original=true/123456.mp4';
+
+describe('stillUrl', () => {
+  it('asks the CDN for a transcoded first frame of a video', () => {
+    expect(stillUrl(CDN, 'video', 320)).toBe(
+      'https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/0b1c2d3e-uuid/anim=false,transcode=true,width=320/123456.jpeg');
+  });
+
+  it('resizes an image and keeps a link off the CDN as it is', () => {
+    expect(stillUrl(CDN.replace('.mp4', '.jpeg'), 'image', 200)).toContain('/width=200/123456.jpeg');
+    expect(stillUrl('https://example.com/a.png', 'image')).toBe('https://example.com/a.png');
+  });
+
+  it('has no still for audio, a missing link or a video off the CDN', () => {
+    expect(stillUrl(CDN, 'audio')).toBeNull();
+    expect(stillUrl(null, 'video')).toBeNull();
+    expect(stillUrl('https://example.com/a.mp4', 'video')).toBeNull();
+  });
+});
+
+describe('formatTime', () => {
+  it('reads minutes and hours', () => {
+    expect(formatTime(0)).toBe('0:00');
+    expect(formatTime(221.7)).toBe('3:41');
+    expect(formatTime(3723)).toBe('1:02:03');
+  });
+
+  it('shows a placeholder for unknown values', () => {
+    expect(formatTime(NaN)).toBe('–:––');
+    expect(formatTime(Infinity)).toBe('–:––');
+    expect(formatTime(null)).toBe('–:––');
+  });
+});
+
+it('formatCount shortens large counts', () => {
+  expect(formatCount(18)).toBe('18');
+  expect(formatCount(1234)).toBe('1.2k');
+  expect(formatCount(214000)).toBe('214k');
+  expect(formatCount(3_400_000)).toBe('3.4M');
+});
