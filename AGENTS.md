@@ -27,9 +27,15 @@
   `local/spdx-header` rule enforces it and `--fix` inserts it. Disable a rule
   only on the line, with `-- reason`.
 - Keep the AGPL footer with the source URL on every screen (section 13).
+- **Desktop first.** The wide layout is the base. `@container .app (max-width: …)`
+  rules fold it down for narrow slots. This reverses the template's narrow-first
+  advice.
 - Layout uses `@container` queries on `.app`, not viewport media queries. Write
   breakpoints as numbers (480/768/1024…); `var(--civitai-bp-*)` in a query
   condition never matches.
+- Visual direction: "Clean dark". Near-black surfaces, big media, one coral
+  accent (`#ff6b4a`) for the active state and playback. No Civitai
+  design-system look.
 - Commits use conventional commit titles. Do not push, add a remote, submit the
   app or send platform feedback without the owner's explicit approval.
 
