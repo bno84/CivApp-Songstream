@@ -32,7 +32,8 @@
   `// SPDX-License-Identifier: AGPL-3.0-or-later` (`/* … */` in CSS); the
   `local/spdx-header` rule enforces it and `--fix` inserts it. Disable a rule
   only on the line, with `-- reason`.
-- Keep the AGPL footer with the source URL on every screen (section 13).
+- Keep the AGPL source note (`SourceNote`, with the source URL) on every screen
+  (section 13). It sits at the right of the top bar, not in a full-width footer.
 - **Desktop first.** The wide layout is the base. `@container .app (max-width: …)`
   rules fold it down for narrow slots. This reverses the template's narrow-first
   advice.

@@ -87,7 +87,7 @@ button:disabled {
      does, unless the frame is shorter than the player can be. */
   height: 100dvh;
   min-height: 600px;
-  padding: 16px 20px 0;
+  padding: 16px 20px;
   background: var(--bg);
 }
 
@@ -102,6 +102,9 @@ button:disabled {
   display: grid;
   flex: 1;
   grid-template-columns: minmax(0, 1fr) 400px;
+  /* One row, exactly the height left: an auto row would grow to the whole
+     queue's height and scroll the page. */
+  grid-template-rows: minmax(0, 1fr);
   gap: 20px;
   min-height: 0;
 }
@@ -123,12 +126,11 @@ button:disabled {
   color: var(--dim);
 }
 
-.footer {
+.source-note {
   flex: none;
-  padding: 8px 0;
+  margin: 0 0 0 auto;
   color: var(--dim);
-  font-size: 12px;
-  text-align: center;
+  font-size: 11px;
 }
 
 .source-url {
@@ -486,14 +488,12 @@ kbd {
   flex: 0 1 100px;
 }
 
-.load-note {
-  min-height: 1.4em;
-  margin: -4px 0 0;
+.station-status {
   color: var(--dim);
   font-size: 12px;
 }
 
-.load-note.error {
+.station-status.error {
   color: var(--accent-text);
 }
 
@@ -774,6 +774,7 @@ kbd {
 
   .radio-main {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
   }
 
   .stage {

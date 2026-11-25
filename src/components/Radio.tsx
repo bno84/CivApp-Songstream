@@ -105,15 +105,13 @@ export function Radio({ api }: { api: ApiClient }) {
 
   return (
     <div className="radio">
-      <StationBar stations={stations} selected={selected} onSelect={select} onOpen={openById} />
+      <StationBar stations={stations} selected={selected} onSelect={select} onOpen={openById}
+        status={barStatus(load, station?.name ?? 'this playlist', Boolean(track))} />
       <div className="radio-main">
         <div className="player-column">
           <Stage player={player} mediaRef={mediaRef} status={statusText(load, selected)} />
           <NowPlaying track={track} title={title} info={info} />
           <Controls player={player} />
-          <p className={`load-note${load.status === 'error' ? ' error' : ''}`} aria-live="polite">
-            {loadNote(load, station?.name ?? 'this playlist')}
-          </p>
         </div>
         <Panel player={player} infos={infos} />
       </div>
@@ -140,12 +138,13 @@ function statusText(load: Load, selected: number): string | null {
   return null;
 }
 
-/** The line under the controls: progress, or why the selected playlist is not playing. */
-function loadNote(load: Load, name: string): string {
-  if (load.status === 'loading') return `Tuning in to ${name}…`;
-  if (load.status === 'error') return `${name}: ${load.message}`;
-  const parts = [`${load.playable} to play`];
-  if (load.skipped) parts.push(`${load.skipped} image${load.skipped === 1 ? '' : 's'} skipped`);
-  if (!load.done) parts.push('loading more…');
-  return parts.join(' · ');
+/**
+ * The top bar's note, only while it matters: tuning in to another playlist, or
+ * why it failed, while the stage still shows what was playing before.
+ */
+function barStatus(load: Load, name: string, playing: boolean): { text: string; error: boolean } | null {
+  if (!playing) return null;
+  if (load.status === 'loading') return { text: `Tuning in to ${name}…`, error: false };
+  if (load.status === 'error') return { text: `${name}: ${load.message}`, error: true };
+  return null;
 }

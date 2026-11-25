@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 
 import { parseCollectionRef } from '../api.js';
 import { Icon } from './Icon.js';
+import { SourceNote } from './SourceNote.js';
 
 export interface Station {
   id: number;
@@ -12,8 +13,10 @@ export interface Station {
 }
 
 /** The playlists across the top: the featured one, the viewer's collections, and any opened by link. */
-export function StationBar({ stations, selected, onSelect, onOpen }: {
+export function StationBar({ stations, selected, onSelect, onOpen, status }: {
   stations: Station[];
+  /** Loading or failing to load the selected playlist, when the stage cannot say so. */
+  status: { text: string; error: boolean } | null;
   selected: number;
   onSelect: (id: number) => void;
   /** Adds a collection by id and plays it. */
@@ -60,7 +63,11 @@ export function StationBar({ stations, selected, onSelect, onOpen }: {
             <Icon name="plus" size={14} /> link
           </button>
         )}
+        {status && (
+          <span className={`station-status${status.error ? ' error' : ''}`} role="status">{status.text}</span>
+        )}
       </nav>
+      <SourceNote />
     </header>
   );
 }

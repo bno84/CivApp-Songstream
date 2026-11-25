@@ -5,8 +5,7 @@ import { useBlockContext, useBlockResize, useRequestSignIn } from '@civitai/bloc
 
 import type { ApiClient } from './api.js';
 import { Radio } from './components/Radio.js';
-
-const SOURCE_URL = 'https://github.com/bno84/CivApp-CivRadio';
+import { SourceNote } from './components/SourceNote.js';
 
 export function App({ api }: { api: ApiClient }) {
   const { ready, viewer, theme } = useBlockContext();
@@ -21,12 +20,13 @@ export function App({ api }: { api: ApiClient }) {
 
   let body;
   if (!ready) {
-    body = <p className="center-note">Tuning in…</p>;
+    body = <div className="center-note"><p>Tuning in…</p><SourceNote /></div>;
   } else if (!viewer) {
     body = (
       <div className="center-note">
         <p>Sign in to Civitai to play collections.</p>
         <button type="button" className="chip on" onClick={() => requestSignIn()}>Sign in</button>
+        <SourceNote />
       </div>
     );
   } else {
@@ -35,12 +35,8 @@ export function App({ api }: { api: ApiClient }) {
 
   return (
     <main ref={rootRef} className="app" data-theme={theme}>
+      {/* The player shows the source note in its top bar; the other states beside their message. */}
       {body}
-      {/* AGPL-3.0 §13: offer the source to everyone who uses the app. The
-          sandbox allows no popups, so the URL is plain selectable text. */}
-      <footer className="footer">
-        Free software under AGPL-3.0-or-later. Source: <span className="source-url">{SOURCE_URL}</span>
-      </footer>
     </main>
   );
 }
