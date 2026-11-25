@@ -56,6 +56,7 @@ export interface CollectionDetail {
 
 export interface MediaItem {
   mediaId: number;
+  reactTicket?: string;
   type: MediaType;
   url: string | null;
   width: number | null;

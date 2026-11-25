@@ -7,6 +7,7 @@
 import { getTransport } from '@civitai/blocks-react';
 import { Harness } from '@civitai/blocks-react/testing';
 
+import manifest from '../../block.manifest.json';
 import { App } from '../App.js';
 import { ApiError, type ApiClient, type CollectionDetail, type ImageInfo, type MediaItem } from '../api.js';
 import { createMemory } from '../memory.js';
@@ -34,6 +35,7 @@ function sample(count: number, seed: number, imageShare = 0): MediaItem[] {
     const image = (i * 7 + seed) % 10 < imageShare * 10;
     return {
       mediaId: id, type: image ? 'image' : 'video', url: image ? null : CLIPS[i % CLIPS.length],
+      reactTicket: `mock-ticket-${id}`,
       width: 1280, height: 720, nsfwLevel: 1,
       // Every 11th item has no creator, as a deleted account would.
       creator: i % 11 === 10 ? null : { userId: 500 + (i % CREATORS.length), username: CREATORS[(i + seed) % CREATORS.length] },
@@ -133,7 +135,8 @@ const memory = createMemory(createDevStorage());
 
 export function HarnessApp() {
   return (
-    <Harness showLog={showLog}>
+    <Harness showLog={showLog} declaredScopes={manifest.scopes}
+      reactionStates={{ 17000: { counts: { Like: 3, Heart: 2 }, viewerReactions: ['Heart'] } }}>
       <App api={fakeApi} memory={memory} />
     </Harness>
   );

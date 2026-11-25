@@ -82,6 +82,7 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   const collectionReadRef = useRef<AbortController | null>(null);
   const [favorites, setFavorites] = useState<Track[] | null>(null);
   const [favoritesUnsaved, setFavoritesUnsaved] = useState(false);
+  const [reactionTickets, setReactionTickets] = useState<ReadonlyMap<number, string>>(() => new Map());
   const favoriteIds = useMemo(() => new Set(favorites?.map(track => track.id)), [favorites]);
   const favoritesReady = favorites !== null;
 
@@ -134,6 +135,9 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   // reshuffle under the viewer with every page.
   const onPage = useEffectEvent((id: number, page: CollectionPage, first: boolean, held: Track[]) => {
     const tracks = toTracks(page.items);
+    const tickets = page.items.flatMap(item => item.type === 'video' && item.reactTicket
+      ? [[item.mediaId, item.reactTicket] as const] : []);
+    if (tickets.length) setReactionTickets(known => new Map([...known, ...tickets]));
     const skipped = page.items.length - tracks.length;
     if (first) {
       player.load(id, tracks);
@@ -280,7 +284,7 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
       <div className="radio-main">
         <div className="player-column">
           <Stage player={player} mediaRef={mediaRef} status={statusText(load, selected)} />
-          <NowPlaying track={track} title={title} info={info}
+          <NowPlaying track={track} title={title} info={info} reactTicket={track ? reactionTickets.get(track.id) : undefined}
             starred={track != null && favoriteIds.has(track.id)} toggleFavorite={favoritesReady ? toggleFavorite : undefined} />
           <Controls player={player} />
         </div>

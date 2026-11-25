@@ -19,7 +19,9 @@ Media control button support, playlists, shuffle.
   item plays with a click.
 - **Details:** the prompt, settings and resources the creator shared, as on
   Civitai's own image page.
-- **Reactions and comments:** counts, with links to the item on Civitai.
+- **Reactions and comments:** see counts and open the item on Civitai. Tap a
+  reaction to grant permission, then see, add or remove your Civitai reactions
+  on eligible videos.
 - **Media keys and lock screen** (Media Session API) where the browser allows
   them inside the app frame, plus keyboard shortcuts: Space plays and pauses,
   ←/→ seek, Shift+←/→ skip.
@@ -28,9 +30,10 @@ Media control button support, playlists, shuffle.
   up to eight collections you opened by link (hover one to forget it). Only you
   can see them.
 
-It asks only for `collections:read:self` and `apps:storage`, so there is no
-consent prompt. Remembering starts working once Civitai approves the app; until
-then favorites and settings last for the current visit.
+Browsing and saving Favorites need no consent prompt. Radio asks for
+`social:react:self` when you first tap a reaction. Remembering starts working
+once Civitai approves the app. Until then, favorites and settings last for the
+current visit.
 
 ## Limits
 
