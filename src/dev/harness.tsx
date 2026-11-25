@@ -6,13 +6,11 @@
 // They sit off Civitai's CDN, so the queue shows gradients instead of stills.
 import { getTransport } from '@civitai/blocks-react';
 import { Harness } from '@civitai/blocks-react/testing';
-import { createFakeStorage } from '@civitai/sdk/testing';
-
-import manifest from '../../block.manifest.json';
 
 import { App } from '../App.js';
 import { ApiError, type ApiClient, type CollectionDetail, type ImageInfo, type MediaItem } from '../api.js';
 import { createMemory } from '../memory.js';
+import { createDevStorage } from './storage.js';
 
 // The mock host answers from this origin; the transport drops anything else.
 getTransport({ allowedParentOrigins: [window.location.origin] });
@@ -131,7 +129,7 @@ const showLog = new URLSearchParams(window.location.search).has('log');
 
 // The document store, in memory and gone on reload, enforcing the server's rules
 // against the real manifest.
-const memory = createMemory(createFakeStorage({ manifest, viewer: { username: 'dev-viewer' } }).storage);
+const memory = createMemory(createDevStorage());
 
 export function HarnessApp() {
   return (

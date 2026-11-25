@@ -19,6 +19,9 @@ export default defineConfig(({ mode }) => {
   return {
     base: './',
     plugins: [react()],
+    define: {
+      'import.meta.env.VITE_DEV_TUNNEL': JSON.stringify(devTunnel ? 'true' : 'false'),
+    },
     server: {
       // `civitai app dev-tunnel` serves this dev server as a `dev-<hex>.civit.ai`
       // host that a Civitai domain iframes. allowedHosts admits that host (Vite

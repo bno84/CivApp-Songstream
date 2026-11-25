@@ -73,3 +73,13 @@ counts. In `mode=mine`, each collection's `type`, or a `type=Image` filter:
 today the app asks the public collection route for every collection's type to
 leave out Model, Post and Article collections. This saves requests; the app
 works without it.
+
+### 6. Document-store previews with the React host bridge
+
+**Today:** tunnel tokens omit storage scopes. The SDK's built-in local preview
+needs the host's `storageMode` from its own bridge, which `blocks-react` does
+not expose. Radio uses one host bridge and supplies a manifest-backed fake
+store in the tunnel.
+
+**Want:** expose the preview mode through `blocks-react` and support the SDK's
+local preview store from that bridge.

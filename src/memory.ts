@@ -6,7 +6,7 @@
 //
 // Remembering is a convenience, never a requirement. Reads fall back to the
 // defaults and writes land in memory first, so a store that refuses (the app
-// not approved yet, a dev-tunnel preview, offline, over quota) only means the
+// not approved yet, offline, over quota) only means the
 // next visit starts fresh.
 import type { DocumentStorage } from '@civitai/sdk';
 

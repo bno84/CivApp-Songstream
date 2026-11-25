@@ -3,7 +3,7 @@ import { StrictMode, useMemo, useRef, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { useBlockToken, useHostOrigin } from '@civitai/blocks-react';
-import { initialize } from '@civitai/sdk';
+import { initialize, type DocumentStorage } from '@civitai/sdk';
 
 import { App } from './App.js';
 import { createHttpClient } from './api.js';
@@ -15,7 +15,7 @@ import './index.css';
 // design-system pack's. blocks-react is used for the host bridge only.
 
 /** The real API, on the validated host origin, with the host-minted block token. */
-function LiveApp() {
+function LiveApp({ previewStorage }: { previewStorage?: DocumentStorage }) {
   const origin = useHostOrigin();
   const token = useBlockToken();
   // Read at request time, so a refreshed token is used without rebuilding the
@@ -29,14 +29,13 @@ function LiveApp() {
     getToken: () => tokenRef.current.raw || undefined,
     refreshToken: () => tokenRef.current.refresh(),
   }), [origin]);
-  // The document store, on the same block token. Started from the token rather
-  // than with a bare initialize(): that would open a second host bridge beside
-  // blocks-react's, and a second BLOCK_READY.
-  const memory = useMemo(() => createMemory(initialize({
+  // Keep the tunnel's manifest-backed store local. The live document store
+  // uses the same block token to avoid a second bridge and BLOCK_READY.
+  const memory = useMemo(() => createMemory(previewStorage ?? initialize({
     siteUrl: `${origin ?? window.location.origin}/api/v1`,
     token: () => tokenRef.current.raw,
     refresh: async () => (await tokenRef.current.refresh()).raw,
-  }).then(app => app.storage)), [origin]);
+  }).then(app => app.storage)), [origin, previewStorage]);
   /* eslint-enable react-hooks/refs */
   return <App api={api} memory={memory} />;
 }
@@ -46,6 +45,10 @@ async function mount(): Promise<ReactNode> {
   if (import.meta.env.DEV && import.meta.env.VITE_DEV_HARNESS === 'true') {
     const { HarnessApp } = await import('./dev/harness.js');
     return <HarnessApp />;
+  }
+  if (import.meta.env.DEV && import.meta.env.VITE_DEV_TUNNEL === 'true') {
+    const { createDevStorage } = await import('./dev/storage.js');
+    return <LiveApp previewStorage={createDevStorage()} />;
   }
   return <LiveApp />;
 }

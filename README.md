@@ -58,6 +58,11 @@ pnpm run build
 pnpm exec civitai app validate
 ```
 
+The mock host and the dev tunnel use an in-memory document store checked
+against the local manifest. Start the tunnel's Vite server with
+`pnpm run dev:tunnel`. Favorites and player settings reset when the preview
+reloads.
+
 ## License
 
 Copyright (C) 2026 bno84 and contributors.
