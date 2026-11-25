@@ -22,25 +22,25 @@ Report items with `pnpm exec civitai feedback send --about <area> "<text>"`
 
 ## Top priority
 
-### 1. A page app frame that fits the screen
-
-**Today:** on civitai.com the page app's frame runs on below the fold, under
-Civitai's header, and Civitai's bottom bar is drawn over it. A full-height app
-scrolls the page and hides its own controls. The host ignores resize requests
-from page apps and passes no visible height. The app measures the visible part
-itself with an IntersectionObserver, guesses the bottom bar's height (40px),
-and cancels wheel scrolling that would move Civitai's page.
-
-**Want:** the frame sized to the visible content area, or that height passed to
-the app (in `BLOCK_INIT` and on change).
-
-### 2. Comments
+### 1. Comments
 
 **Today:** no hook, route or scope reads or posts comments. The app shows the
 count and opens the item on Civitai.
 
 **Want:** a read route for an image's or post's comments, and later a
 consent-gated scope to post one.
+
+## Also wanted
+
+### 2. A page app frame that fits the screen
+
+**Today:** Radio fits the player to the visible area. It measures the frame
+with an IntersectionObserver and estimates the height of Civitai's bottom bar.
+The estimate can leave small layout and scrolling issues. The host ignores
+resize requests from page apps and passes no visible height.
+
+**Want:** the frame sized to the visible content area, or that height passed to
+the app (in `BLOCK_INIT` and on change).
 
 ### 3. Autoplay in the frame
 
@@ -50,8 +50,6 @@ docs say nothing about the frame's `allow` list.
 
 **Want:** `autoplay` (and `fullscreen`, `picture-in-picture`) delegated to app
 frames, and the `allow` list documented.
-
-## Also wanted
 
 ### 4. Playlists the app can build
 
