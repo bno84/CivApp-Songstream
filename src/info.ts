@@ -51,6 +51,7 @@ export interface InfoStore {
 const MAX_RESOURCES = 8;
 
 const SETTINGS: [key: string, label: string][] = [
+  ['workflow', 'Workflow'], ['ecosystem', 'Ecosystem'], ['baseModel', 'Base model'],
   ['sampler', 'Sampler'], ['scheduler', 'Scheduler'], ['steps', 'Steps'], ['cfgScale', 'CFG'],
   ['seed', 'Seed'], ['Size', 'Size'], ['clipSkip', 'Clip skip'], ['denoise', 'Denoise'],
 ];
@@ -74,16 +75,40 @@ function resourceRefs(meta: Record<string, unknown>): ResourceRef[] {
   })).slice(0, MAX_RESOURCES);
 }
 
-/** Generation data from an image's free-form meta, or `null` when there is none worth showing. */
-export function readGeneration(meta: ImageInfo['meta']): Omit<Generation, 'resources'> & { refs: ResourceRef[] } | null {
+/**
+ * The meta object itself. Looked up by `imageId`, the images route wraps it as
+ * `{ id, meta }`; by `postId` it comes bare. Either is accepted.
+ */
+function unwrap(meta: ImageInfo['meta']): Record<string, unknown> | null {
   if (!meta || typeof meta !== 'object') return null;
+  const keys = Object.keys(meta);
+  if ('meta' in meta && keys.every(key => key === 'id' || key === 'meta')) {
+    const inner = meta.meta;
+    return inner && typeof inner === 'object' && !Array.isArray(inner) ? inner as Record<string, unknown> : null;
+  }
+  return meta;
+}
+
+/**
+ * Generation data from an image, or `null` when there is none worth showing.
+ * The free-form meta comes first. The image's own `baseModel` and
+ * `modelVersionIds` fill in when the meta lacks them, as it often does for videos.
+ */
+export function readGeneration(image: Pick<ImageInfo, 'meta' | 'baseModel' | 'modelVersionIds'>):
+  Omit<Generation, 'resources'> & { refs: ResourceRef[] } | null {
+  const meta: Record<string, unknown> = { ...unwrap(image.meta) };
+  meta.baseModel ??= image.baseModel;
   const prompt = text(meta.prompt);
   const negativePrompt = text(meta.negativePrompt);
   const settings = SETTINGS.flatMap(([key, label]): [string, string][] => {
     const value = text(meta[key]);
     return value ? [[label, value]] : [];
   });
-  const refs = resourceRefs(meta);
+  let refs = resourceRefs(meta);
+  if (!refs.length && Array.isArray(image.modelVersionIds)) {
+    refs = image.modelVersionIds.filter(id => Number.isSafeInteger(id)).slice(0, MAX_RESOURCES)
+      .map(versionId => ({ type: 'resource', versionId, name: null, weight: null }));
+  }
   if (!prompt && !negativePrompt && !settings.length && !refs.length) return null;
   return { prompt, negativePrompt, settings, refs };
 }
@@ -107,6 +132,8 @@ export function createInfoStore(api: ApiClient): InfoStore {
     const base = { type: capitalise(ref.type), weight: ref.weight };
     if (ref.versionId == null) return { ...base, name: ref.name ?? 'Unknown resource', path: null };
     const version = await api.getModelVersion(ref.versionId).catch(() => null);
+    // A resource listed only by id takes its type from the model.
+    if (ref.type === 'resource' && version?.model?.type) base.type = capitalise(version.model.type);
     const model = version?.model?.name;
     const name = model && version?.name ? `${model} · ${version.name}` : model ?? ref.name ?? `Version ${ref.versionId}`;
     const path = version?.modelId ? `/models/${version.modelId}?modelVersionId=${ref.versionId}` : null;
@@ -138,7 +165,7 @@ export function createInfoStore(api: ApiClient): InfoStore {
       const [post, generation] = await Promise.all([
         image.postId ? api.getPost(image.postId).catch(() => null) : null,
         (async () => {
-          const read = readGeneration(image.meta);
+          const read = readGeneration(image);
           if (!read) return null;
           const { refs, ...rest } = read;
           return { ...rest, resources: await Promise.all(refs.map(resolve)) };

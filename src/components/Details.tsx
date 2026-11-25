@@ -22,7 +22,7 @@ export function Details({ track, infos }: { track: Track | null; infos: InfoStor
   } else if (info.status === 'error') {
     body = <p className="panel-note">{info.message}</p>;
   } else if (!info.generation) {
-    body = <p className="panel-note">The creator did not share how this was made.</p>;
+    body = <p className="panel-note">Civitai lists no generation details for this one. The page on Civitai may show more.</p>;
   } else {
     const { prompt, negativePrompt, settings, resources } = info.generation;
     body = (

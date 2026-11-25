@@ -20,10 +20,10 @@ function settled(store: ReturnType<typeof createInfoStore>, id: number): Promise
 
 describe('readGeneration', () => {
   it('picks the prompt, the known settings and the resources', () => {
-    const generation = readGeneration({
+    const generation = readGeneration({ meta: {
       prompt: ' neon rain ', steps: 30, cfgScale: 6.5, sampler: 'Euler a', unknown: 'x',
       civitaiResources: [{ type: 'checkpoint', modelVersionId: 11, weight: 1 }],
-    });
+    } });
     expect(generation).toEqual({
       prompt: 'neon rain', negativePrompt: null,
       settings: [['Sampler', 'Euler a'], ['Steps', '30'], ['CFG', '6.5']],
@@ -31,9 +31,29 @@ describe('readGeneration', () => {
     });
   });
 
+  it('reads the meta the imageId lookup wraps as { id, meta }', () => {
+    // The shape civitai.com returns for /api/v1/images?imageId=…&withMeta=true (Nov 2026).
+    const generation = readGeneration({
+      meta: { id: 149549485, meta: { prompt: 'catgirl at the pier', workflow: 'img2vid', ecosystem: 'minimax', seed: 4 } },
+      baseModel: 'MiniMax H3', modelVersionIds: [3385247],
+    });
+    expect(generation).toEqual({
+      prompt: 'catgirl at the pier', negativePrompt: null,
+      settings: [['Workflow', 'img2vid'], ['Ecosystem', 'minimax'], ['Base model', 'MiniMax H3'], ['Seed', '4']],
+      refs: [{ type: 'resource', versionId: 3385247, name: null, weight: null }],
+    });
+  });
+
+  it('falls back to the image\'s base model and resources when the meta is empty', () => {
+    expect(readGeneration({ meta: { id: 1, meta: null }, baseModel: 'Wan 2.2', modelVersionIds: [5] })).toMatchObject({
+      prompt: null, settings: [['Base model', 'Wan 2.2']], refs: [{ versionId: 5 }],
+    });
+  });
+
   it('has nothing for missing or empty meta', () => {
-    expect(readGeneration(null)).toBeNull();
-    expect(readGeneration({ comfy: '{}' })).toBeNull();
+    expect(readGeneration({ meta: null })).toBeNull();
+    expect(readGeneration({ meta: { id: 1, meta: null }, modelVersionIds: [] })).toBeNull();
+    expect(readGeneration({ meta: { comfy: '{}' } })).toBeNull();
   });
 });
 

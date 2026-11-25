@@ -61,12 +61,14 @@ function fakeImage(id: number): ImageInfo | null {
   return {
     id, postId: id + 1_000_000, username: null,
     stats: { likeCount: n * 3, heartCount: n * 2 + 1, laughCount: n % 4, cryCount: n % 3, commentCount: n % 9 },
-    meta: id % 4 === 3 ? null : {
+    // Wrapped as { id, meta }, as the real route does when asked by imageId.
+    baseModel: 'Wan 2.2', modelVersionIds: [9001, 9002],
+    meta: id % 4 === 3 ? { id, meta: null } : { id, meta: {
       prompt: `${TITLES[id % TITLES.length].toLowerCase()}, cinematic lighting, slow camera pan, synthwave palette`,
       negativePrompt: id % 2 ? 'blurry, low quality, watermark' : undefined,
       sampler: 'Euler a', steps: 30, cfgScale: 6.5, seed: 2381904412 + id, Size: '1280x720',
       civitaiResources: [{ type: 'checkpoint', modelVersionId: 9001, weight: 1 }, { type: 'lora', modelVersionId: 9002, weight: 0.8 }],
-    },
+    } },
   };
 }
 

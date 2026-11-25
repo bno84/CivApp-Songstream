@@ -85,8 +85,13 @@ export interface ImageInfo {
   postId?: number | null;
   username?: string | null;
   stats?: ImageStats | null;
-  /** Free-form generation data; present only when the uploader shared it. */
+  /**
+   * Free-form generation data; present only when the uploader shared it.
+   * Looked up by imageId it arrives wrapped, as `{ id, meta }`.
+   */
   meta?: Record<string, unknown> | null;
+  baseModel?: string | null;
+  modelVersionIds?: number[] | null;
 }
 
 export interface PostInfo {
