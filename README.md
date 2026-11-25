@@ -1,7 +1,8 @@
 # Civitai Radio
 
-A Civitai app that feels like a music player.
-Media control button support, playlists, shuffle.
+Play Civitai video collections like music playlists. Tune in to Music Focus,
+pick one of your own collections, or paste a public collection link. Shuffle
+the queue, star tracks for later, and control playback with your media keys.
 
 **Status:** in development, tried inside Civitai through the dev tunnel.
 
