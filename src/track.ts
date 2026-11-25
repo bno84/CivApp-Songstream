@@ -26,11 +26,12 @@ export function toTracks(items: readonly MediaItem[]): Track[] {
   }] : []));
 }
 
-/** The track's post title, or a stand-in until (or unless) Civitai has one. */
+/**
+ * The track's post title, or a stand-in until (or unless) Civitai has one. The
+ * stand-in leaves the creator out: it is always shown beside the title.
+ */
 export function trackTitle(track: Track, title: string | null | undefined): string {
-  if (title) return title;
-  const kind = track.type === 'audio' ? 'Track' : 'Video';
-  return track.creator?.username ? `${kind} by ${track.creator.username}` : `${kind} #${track.id}`;
+  return title || (track.type === 'audio' ? 'Untitled track' : 'Untitled video');
 }
 
 export const profilePath = (name: string | null | undefined) =>

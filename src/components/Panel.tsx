@@ -56,16 +56,20 @@ function QueueList({ player, infos }: { player: Player; infos: InfoStore }) {
     <ol className="queue" ref={listRef}>
       {rows.map(({ item, at, state }) => {
         const info = infos.get(item.id);
-        const title = trackTitle(item, info?.status === 'ready' ? info.title : null);
+        const known = info?.status === 'ready' ? info.title : null;
+        const title = trackTitle(item, known);
+        const creator = item.creator?.username ?? 'Unknown creator';
+        // Untitled rows lead with the creator, so the list stays scannable.
+        const [main, sub] = known ? [known, creator] : [creator, title];
         const duration = durations.get(item.id);
         return (
           <li key={item.id} className={`queue-row ${state}`} aria-current={state === 'current'}>
             <button type="button" onClick={() => player.jumpTo(at)} title={`Play ${title}`}>
               <Thumb still={item.still} id={item.id} />
               <span className="queue-text">
-                <span className="ellipsis">{title}</span>
+                <span className="ellipsis">{main}</span>
                 <span className="queue-sub ellipsis">
-                  {item.creator?.username ?? 'Unknown creator'}
+                  {sub}
                   {duration != null && ` · ${formatTime(duration)}`}
                 </span>
               </span>

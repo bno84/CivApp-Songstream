@@ -48,6 +48,12 @@ body {
   color: var(--text);
 }
 
+/* The query container is #root, not .app, so the rules below can change .app
+   itself: a container cannot query its own size. */
+#root {
+  container: app / inline-size;
+}
+
 button {
   font: inherit;
   color: inherit;
@@ -77,18 +83,19 @@ button:disabled {
 .app {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
-  padding: 16px 20px 6px;
+  /* Exactly the frame: the queue and details scroll inside it, the page never
+     does, unless the frame is shorter than the player can be. */
+  height: 100dvh;
+  min-height: 600px;
+  padding: 16px 20px 0;
   background: var(--bg);
-  container: app / inline-size;
 }
 
 .radio {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  /* The page fills the frame; the queue scrolls inside it, not the page. */
-  height: calc(100dvh - 48px);
-  min-height: 560px;
+  min-height: 0;
 }
 
 .radio-main {
@@ -117,7 +124,8 @@ button:disabled {
 }
 
 .footer {
-  padding: 8px 0 4px;
+  flex: none;
+  padding: 8px 0;
   color: var(--dim);
   font-size: 12px;
   text-align: center;
@@ -202,10 +210,10 @@ button:disabled {
 .stage {
   position: relative;
   display: grid;
-  flex: 1 1 auto;
+  /* Takes whatever height the column has left, so nothing leaves a gap. */
+  flex: 1 1 0;
   place-items: center;
-  min-height: 220px;
-  max-height: 60vh;
+  min-height: 200px;
   overflow: hidden;
   border-radius: var(--radius);
   background: var(--sunken);
@@ -542,6 +550,15 @@ kbd {
   list-style: none;
 }
 
+/* Quiet scrollbars. Progressive: a browser without these keeps its own. */
+.queue,
+.details {
+  /* eslint-disable-next-line css/use-baseline -- progressive, see above */
+  scrollbar-width: thin;
+  /* eslint-disable-next-line css/use-baseline -- progressive, see above */
+  scrollbar-color: var(--line) transparent;
+}
+
 .queue-row button {
   display: flex;
   align-items: center;
@@ -746,9 +763,13 @@ kbd {
 }
 
 @container app (max-width: 768px) {
-  .radio {
+  .app {
     height: auto;
-    min-height: 0;
+    min-height: 100dvh;
+  }
+
+  .radio {
+    flex: none;
   }
 
   .radio-main {
@@ -758,7 +779,6 @@ kbd {
   .stage {
     flex: none;
     aspect-ratio: 16 / 9;
-    max-height: none;
   }
 
   .panel {
