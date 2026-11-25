@@ -53,6 +53,7 @@ const COLLECTIONS: { detail: CollectionDetail; items: MediaItem[]; mine: boolean
   { detail: detail(101, 'My chill'), items: sample(14, 1), mine: true },
   { detail: detail(102, 'Road trip'), items: sample(40, 2, 0.3), mine: true },
   { detail: detail(103, 'Cozy interiors'), items: sample(12, 3, 1), mine: true },
+  { detail: detail(104, 'Favourite checkpoints'), items: [], mine: true },
   // Reachable only by link: try 201.
   { detail: detail(201, 'Neon cities', { userId: 77, username: 'skyline_kat' }), items: sample(25, 4), mine: false },
 ];
@@ -105,6 +106,11 @@ const fakeApi: ApiClient = {
     await delay(150);
     const imageId = id - 1_000_000;
     return imageId % 7 === 2 ? { id, title: null } : { id, title: TITLES[imageId % TITLES.length] };
+  },
+  async getCollectionType(id) {
+    await delay(100);
+    // A Model collection the viewer owns, which the playlist bar should leave out.
+    return id === 104 ? 'Model' : id === 101 ? null : 'Image';
   },
   async getUser(id) {
     await delay(400);

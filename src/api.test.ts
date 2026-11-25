@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  createHttpClient, parseCollectionRef, parseRetryAfter, readCollection, type ApiClient, type CollectionPage,
+  createHttpClient, parseCollectionRef, parseRetryAfter, playableCollections, readCollection, type ApiClient,
+  type CollectionPage,
 } from './api.js';
 
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
@@ -82,4 +83,16 @@ it('parseCollectionRef reads an id or a collection link on any Civitai domain', 
   expect(parseCollectionRef('https://civitai.red/collections/17980935?sort=Recently+Added')).toBe(17980935);
   expect(parseCollectionRef('https://civitai.com/models/1')).toBeNull();
   expect(parseCollectionRef('0')).toBeNull();
+});
+
+it('playableCollections keeps Image collections and unknown ones, in order', async () => {
+  const types: Record<number, string | null> = { 1: 'Image', 2: 'Model', 3: null, 4: 'Post', 5: 'Article', 6: 'Image' };
+  const api = {
+    getCollectionType: async (id: number) => {
+      if (id === 7) throw new Error('offline');
+      return types[id] ?? null;
+    },
+  } as unknown as ApiClient;
+  const kept = await playableCollections(api, [1, 2, 3, 4, 5, 6, 7].map(id => ({ id })));
+  expect(kept.map(entry => entry.id)).toEqual([1, 3, 6, 7]);
 });

@@ -67,4 +67,7 @@ more requests per track (image, post, each resource, the creator) to show a
 title, reaction counts, generation data and an avatar.
 
 **Want:** on each item: `postId`, the post title, and the reaction and comment
-counts. This saves requests; the app works without it.
+counts. In `mode=mine`, each collection's `type`, or a `type=Image` filter:
+today the app asks the public collection route for every collection's type to
+leave out Model, Post and Article collections. This saves requests; the app
+works without it.

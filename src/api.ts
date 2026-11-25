@@ -19,7 +19,11 @@
 //   GET /api/v1/posts/{id}                      the post's title
 //   GET /api/v1/model-versions/{id}             a resource's model and version name
 //   GET /api/v1/users?ids=…                     a creator's avatar (a CDN key)
+//   GET /api/v1/collections/{id}                a public collection's type
 //
+// `mode=mine` lists every collection the viewer owns, of any type, without
+// saying which: Model, Post and Article collections play nothing. The public
+// collection route names the type (Image, Model, Post, Article).
 // The images route filters by browsing level, so it is asked for the item's own
 // level: one the viewer already sees, since the collection route served it.
 
@@ -123,6 +127,8 @@ export interface ApiClient {
   getPost(id: number, signal?: AbortSignal): Promise<PostInfo | null>;
   getModelVersion(id: number, signal?: AbortSignal): Promise<ModelVersionInfo | null>;
   getUser(id: number, signal?: AbortSignal): Promise<UserInfo | null>;
+  /** 'Image', 'Model', 'Post' or 'Article'; `null` when Civitai will not say (a private collection). */
+  getCollectionType(id: number, signal?: AbortSignal): Promise<string | null>;
 }
 
 export class ApiError extends Error {
@@ -220,6 +226,10 @@ export function createHttpClient({ origin, getToken, refreshToken }: HttpOptions
     },
     getPost: (id, signal) => lookup<PostInfo>(`/api/v1/posts/${id}`, {}, signal),
     getModelVersion: (id, signal) => lookup<ModelVersionInfo>(`/api/v1/model-versions/${id}`, {}, signal),
+    getCollectionType: async (id, signal) => {
+      const found = await lookup<{ type?: unknown }>(`/api/v1/collections/${id}`, {}, signal);
+      return typeof found?.type === 'string' ? found.type : null;
+    },
     getUser: async (id, signal) => {
       const page = await lookup<{ items?: UserInfo[] }>('/api/v1/users', { ids: id }, signal);
       return page?.items?.find(item => item.id === id) ?? null;
@@ -308,6 +318,28 @@ export async function readCollection(api: ApiClient, id: number,
     seen.add(next);
     cursor = next;
   }
+}
+
+const TYPE_LOOKUPS_AT_ONCE = 4;
+
+/**
+ * The collections that can hold videos: Image collections, and any whose type
+ * Civitai will not say. Looked up a few at a time; order is kept.
+ */
+export async function playableCollections<T extends { id: number }>(api: ApiClient, collections: readonly T[],
+  signal?: AbortSignal): Promise<T[]> {
+  const keep = new Array<boolean>(collections.length).fill(true);
+  let next = 0;
+  async function worker() {
+    while (next < collections.length) {
+      const at = next++;
+      const type = await api.getCollectionType(collections[at].id, signal).catch(() => null);
+      if (signal?.aborted) throw signal.reason;
+      keep[at] = type == null || type === 'Image';
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(TYPE_LOOKUPS_AT_ONCE, collections.length) }, worker));
+  return collections.filter((_, at) => keep[at]);
 }
 
 /** A collection id from a number or a Civitai collection link. */

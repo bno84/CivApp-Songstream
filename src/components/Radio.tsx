@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
-import { readCollection, readMyCollections, type ApiClient, type CollectionPage } from '../api.js';
+import { playableCollections, readCollection, readMyCollections, type ApiClient, type CollectionPage } from '../api.js';
 import { useKeyboard, useMediaSession } from '../controls.js';
 import { createInfoStore } from '../info.js';
 import { DEFAULT_PREFS, type Memory, type Prefs, type RecentStation } from '../memory.js';
@@ -75,7 +75,8 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   // The viewer's own collections become stations after the featured one.
   useEffect(() => {
     const controller = new AbortController();
-    readMyCollections(api, controller.signal).then(mine => {
+    // Only those that can hold videos: Model, Post and Article collections play nothing.
+    readMyCollections(api, controller.signal).then(all => playableCollections(api, all, controller.signal)).then(mine => {
       setStations(known => mergeStations(known, mine.map(({ id, name }): Station => ({ id, name, source: 'mine' }))));
     }).catch(() => {
       // Without them the featured station and links still work.
