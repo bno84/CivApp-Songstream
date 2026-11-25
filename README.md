@@ -9,7 +9,9 @@ Media control button support, playlists, shuffle.
 
 ```bash
 pnpm install
-pnpm run dev          # local preview, no host behind it
+pnpm run dev:harness   # mock host at http://localhost:5186
+pnpm run lint
+pnpm test
 pnpm run build
 pnpm exec civitai app validate
 ```

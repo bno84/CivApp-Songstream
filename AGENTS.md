@@ -9,6 +9,27 @@
   `civitai …` command below as `pnpm exec civitai …`. Do not use the
   `npx -y @civitai/cli@latest` fallback and do not install it globally.
 - Build scripts are opt-in via `allowBuilds` in `pnpm-workspace.yaml`.
+- Run locally with `pnpm run dev:harness` (mock host). Plain `pnpm run dev`
+  waits forever for a `BLOCK_INIT`.
+- `@civitai/blocks-react` is the host bridge (context, token, resize, harness).
+  The app does NOT call `injectBlocksStyles()`: Civitai Radio has its own look,
+  not the design-system pack's. Keep the host theme (`data-theme`) working.
+- Keep network code in one module (as Collectalytics does in `src/api.ts`).
+  Collection items come from `GET /api/v1/blocks/collections/{id}` with
+  `collections:read:self`. Media lists come from `GET /api/v1/images`
+  (`type=video|audio`).
+- Playlists are the viewer's own Civitai collections. The document store is a
+  stop-gap only, for what Civitai cannot hold yet. Record each gap in an
+  upstream wishlist instead of building around it silently.
+- Run `pnpm run lint` (ESLint: typescript-eslint type-checked, React, hooks,
+  CSS) before committing. Every source file starts with
+  `// SPDX-License-Identifier: AGPL-3.0-or-later` (`/* … */` in CSS); the
+  `local/spdx-header` rule enforces it and `--fix` inserts it. Disable a rule
+  only on the line, with `-- reason`.
+- Keep the AGPL footer with the source URL on every screen (section 13).
+- Layout uses `@container` queries on `.app`, not viewport media queries. Write
+  breakpoints as numbers (480/768/1024…); `var(--civitai-bp-*)` in a query
+  condition never matches.
 - Commits use conventional commit titles. Do not push, add a remote, submit the
   app or send platform feedback without the owner's explicit approval.
 
@@ -117,6 +138,7 @@ here:
 
 | Task | Command |
 |---|---|
+| Local dev against a MOCK host — synthetic replies, no real Buzz, no compute; the mock result image is fetched from placehold.co | `npm run dev:harness` |
 | Plain local preview — there is no host behind it, so nothing sends BLOCK_INIT | `npm run dev` |
 | Serve this app so `civitai app dev-tunnel` can reach it (run it in another terminal) | `npm run dev:tunnel` |
 
