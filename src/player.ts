@@ -20,6 +20,7 @@ export interface Player {
   queue: Queue<Track>;
   station: StationId | null;
   pending: Queue<Track> | null;
+  cached: ReadonlyMap<StationId, Queue<Track>>;
   track: Track | null;
   playing: boolean;
   time: number;
@@ -183,6 +184,7 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
     queue,
     station,
     pending,
+    cached: state.cached,
     track,
     playing,
     time,

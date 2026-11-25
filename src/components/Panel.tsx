@@ -12,7 +12,9 @@ type Tab = 'queue' | 'details';
 const TABS: Tab[] = ['queue', 'details'];
 
 interface PanelProps {
-  queue: Queue<Track>;
+  queue: Queue<Track> | null;
+  activeQueue: boolean;
+  emptyMessage: string;
   track: Track | null;
   durations: ReadonlyMap<number, number>;
   playing: boolean;
@@ -29,9 +31,11 @@ interface PanelProps {
  * item's details. Memoised: it does not render again on every time update,
  * which would rebuild thousands of queue rows a few times a second.
  */
-export const Panel = memo(function Panel({ queue, track, durations, playing, jumpTo, infos, favoriteIds, toggleFavorite }: PanelProps) {
+export const Panel = memo(function Panel({
+  queue, activeQueue, emptyMessage, track, durations, playing, jumpTo, infos, favoriteIds, toggleFavorite,
+}: PanelProps) {
   const [tab, setTab] = useState<Tab>('queue');
-  const count = queue.order.length;
+  const count = queue?.order.length ?? 0;
 
   // Arrow keys move between the tabs, as a tablist should. Handled here, they
   // never reach the window's seek shortcuts.
@@ -61,21 +65,23 @@ export const Panel = memo(function Panel({ queue, track, durations, playing, jum
   return (
     <section className="panel">
       <div className="tabs" role="tablist" aria-label="Queue and details" onKeyDown={onKeyDown}>
-        <button {...tabProps('queue')}>Queue{count ? ` · ${queue.pos + 1} of ${count}` : ''}</button>
+        <button {...tabProps('queue')}>Queue{count ? (activeQueue && queue ? ` · ${queue.pos + 1} of ${count}` : ` · ${count}`) : ''}</button>
         <button {...tabProps('details')}>Details</button>
       </div>
       <div className="panel-body" role="tabpanel" id={`tabpanel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {tab === 'queue'
-          ? <QueueList queue={queue} durations={durations} playing={playing} jumpTo={jumpTo} infos={infos}
-              favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} />
-          : <Details track={track} infos={infos} />}
+        {tab === 'details' ? <Details track={track} infos={infos} />
+          : queue && count > 0
+            ? <QueueList queue={queue} activeQueue={activeQueue} durations={durations} playing={playing}
+                jumpTo={jumpTo} infos={infos} favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} />
+            : <p className="panel-note">{emptyMessage}</p>}
       </div>
     </section>
   );
 });
 
-function QueueList({ queue, durations, playing, jumpTo, infos, favoriteIds, toggleFavorite }:
-  Pick<PanelProps, 'queue' | 'durations' | 'playing' | 'jumpTo' | 'infos' | 'favoriteIds' | 'toggleFavorite'>) {
+function QueueList({ queue, activeQueue, durations, playing, jumpTo, infos, favoriteIds, toggleFavorite }:
+  Pick<PanelProps, 'activeQueue' | 'durations' | 'playing' | 'jumpTo' | 'infos' | 'favoriteIds' | 'toggleFavorite'>
+  & { queue: Queue<Track> }) {
   const listRef = useRef<HTMLOListElement>(null);
   const rows = entries(queue);
 
@@ -83,7 +89,8 @@ function QueueList({ queue, durations, playing, jumpTo, infos, favoriteIds, togg
   // is scrolled by hand: scrollIntoView could scroll the page around the app too.
   useLayoutEffect(() => {
     const list = listRef.current;
-    const row = list?.querySelector<HTMLElement>('[aria-current="true"]');
+    const row = list?.children.item(queue.pos);
+    if (!(row instanceof HTMLElement)) return;
     if (!list || !row) return;
     const top = row.offsetTop - list.offsetTop;
     if (top < list.scrollTop || top + row.offsetHeight > list.scrollTop + list.clientHeight) {
@@ -91,10 +98,10 @@ function QueueList({ queue, durations, playing, jumpTo, infos, favoriteIds, togg
     }
   }, [queue.pos, queue.order]);
 
-  if (!rows.length) return <p className="panel-note">Nothing queued yet.</p>;
   return (
     <ol className="queue" ref={listRef}>
       {rows.map(({ item, state }) => {
+        const rowState = !activeQueue && state === 'current' ? 'upcoming' : state;
         const info = infos.get(item.id);
         const known = info?.status === 'ready' ? info.title : null;
         const title = trackTitle(item, known);
@@ -105,7 +112,7 @@ function QueueList({ queue, durations, playing, jumpTo, infos, favoriteIds, togg
         const [main, sub] = known ? [known, creator] : [creator, info?.status === 'ready' ? title : kind];
         const duration = durations.get(item.id);
         return (
-          <li key={item.id} className={`queue-row ${state}`} aria-current={state === 'current'}>
+          <li key={item.id} className={`queue-row ${rowState}`} aria-current={rowState === 'current'}>
             <button type="button" className="queue-play" onClick={() => jumpTo(item.id)} title={`Play ${title}`}>
               <Thumb still={item.still} id={item.id} />
               <span className="queue-text">
@@ -115,7 +122,7 @@ function QueueList({ queue, durations, playing, jumpTo, infos, favoriteIds, togg
                   {duration != null && ` · ${formatTime(duration)}`}
                 </span>
               </span>
-              {state === 'current' && <span className="now-badge">{playing ? '▶ now' : '❚❚'}</span>}
+              {rowState === 'current' && <span className="now-badge">{playing ? '▶ now' : '❚❚'}</span>}
             </button>
             <FavoriteButton title={known ?? creator} starred={favoriteIds.has(item.id)}
               onToggle={toggleFavorite && (() => toggleFavorite(item))} />

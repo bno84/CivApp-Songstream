@@ -20,6 +20,17 @@ function playing(ids: number[], repeat: 'all' | 'one' | 'off' = 'all') {
 const now = (state: PlaybackState) => current(state.queue)?.id ?? null;
 
 describe('playbackReducer', () => {
+  it('plays the clicked track from the selected playlist while another video is still playing', () => {
+    const state = run(initialPlayback({ shuffle: false }),
+      { type: 'load', station: 1, tracks: tracks(1, 2) }, { type: 'play' },
+      { type: 'load', station: 'favorites', tracks: tracks(3, 2) });
+    const switched = run(state, { type: 'jump', id: 2 });
+    expect(switched.station).toBe('favorites');
+    expect(switched.pending).toBeNull();
+    expect(switched.playing).toBe(true);
+    expect(now(switched)).toBe(2);
+  });
+
   it('keeps the current video and queues later pages for the incoming playlist', () => {
     const state = run(initialPlayback({ shuffle: false, repeat: 'one' }),
       { type: 'load', station: 1, tracks: tracks(1, 2) }, { type: 'play' },

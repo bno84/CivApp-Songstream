@@ -227,7 +227,10 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
     player.cancelPending();
     setSelected(id);
     if (id === FAVORITES_ID && favorites) tuneToFavorites(favorites);
-    else setLoad({ id, status: 'loading' });
+    else {
+      if (player.cached.has(id)) player.load(id, []);
+      setLoad({ id, status: 'loading' });
+    }
   };
 
   const openById = (id: number) => {
@@ -264,13 +267,15 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   const title = track ? trackTitle(track, info?.status === 'ready' ? info.title : null) : 'Civitai Radio';
   const station = stations.find(entry => entry.id === selected);
   const playingStation = stations.find(entry => entry.id === player.station);
+  const showingActiveQueue = selected === player.station;
+  const selectedQueue = showingActiveQueue ? queue : player.pending;
   useMediaSession(player, { title, album: playingStation?.name ?? null });
   useKeyboard(player);
 
   return (
     <div className="radio">
       <StationBar stations={stations} selected={selected} onSelect={select} onOpen={openById} onForget={forget}
-        status={barStatus(load, station?.name ?? 'this playlist', Boolean(track), player.pending !== null) ??
+        status={barStatus(load, station?.name ?? 'this playlist', Boolean(track)) ??
           (favoritesUnsaved ? { text: 'Some Favorites changes could only be kept for this visit.', error: true } : null)} />
       <div className="radio-main">
         <div className="player-column">
@@ -279,7 +284,9 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
             starred={track != null && favoriteIds.has(track.id)} toggleFavorite={favoritesReady ? toggleFavorite : undefined} />
           <Controls player={player} />
         </div>
-        <Panel queue={queue} track={track} durations={player.durations} playing={player.playing}
+        <Panel key={selected} queue={selectedQueue} activeQueue={showingActiveQueue} track={track}
+          emptyMessage={statusText(load, selected) ?? 'Nothing queued yet.'}
+          durations={player.durations} playing={player.playing}
           jumpTo={player.jumpTo} infos={infos} infosVersion={infosVersion} favoriteIds={favoriteIds}
           toggleFavorite={favoritesReady ? toggleFavorite : undefined} />
       </div>
@@ -313,14 +320,11 @@ function statusText(load: Load, selected: StationId): string | null {
 }
 
 /**
- * The top bar's note, only while it matters: tuning in to another playlist, or
- * why it failed, while the stage still shows what was playing before.
+ * Errors and collection limits that can matter even when a video is visible.
  */
-function barStatus(load: Load, name: string, hasTrack: boolean, pending: boolean): { text: string; error: boolean } | null {
+function barStatus(load: Load, name: string, hasTrack: boolean): { text: string; error: boolean } | null {
   if (!hasTrack) return null;
-  if (load.status === 'loading') return { text: `Tuning in to ${name}…`, error: false };
   if (load.status === 'error') return { text: `${name}: ${load.message}`, error: true };
-  if (pending) return { text: `${name} plays next.`, error: false };
   if (load.status === 'ready' && load.capped) {
     return { text: `${name} is long: playing its first ${(MAX_PAGES * PAGE_SIZE).toLocaleString('en')} items.`, error: false };
   }

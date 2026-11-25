@@ -93,7 +93,8 @@ export function playbackReducer(state: PlaybackState, action: PlaybackAction): P
     case 'load': {
       const station = action.station ?? null;
       const alreadyActive = station != null && station === state.station;
-      const cached = alreadyActive ? queue : station == null ? undefined : state.cached.get(station);
+      const alreadyPending = station != null && station === state.pendingStation;
+      const cached = alreadyActive ? queue : alreadyPending ? pending : station == null ? undefined : state.cached.get(station);
       let incoming = cached
         ? appendItems(setRepeat(cached, queue.repeat), action.tracks)
         : createQueue(action.tracks, { shuffle: state.defaultShuffle, repeat: queue.repeat });
@@ -104,6 +105,7 @@ export function playbackReducer(state: PlaybackState, action: PlaybackAction): P
         }
       }
       if (alreadyActive) return incoming === queue ? state : { ...state, queue: incoming };
+      if (alreadyPending) return incoming === pending ? state : { ...state, pending: incoming };
       const id = currentId(queue);
       if (state.playing && id != null && !failed.has(id)) return { ...state, pending: incoming, pendingStation: station };
       return {
@@ -159,8 +161,10 @@ export function playbackReducer(state: PlaybackState, action: PlaybackAction): P
       return at === queue ? { ...state, restarts: state.restarts + 1 } : moveTo(state, at);
     }
     case 'jump': {
-      const at = queue.order.findIndex(index => queue.items[index].id === action.id);
+      const shown = pending ?? queue;
+      const at = shown.order.findIndex(index => shown.items[index].id === action.id);
       if (at < 0) return state;
+      if (pending) return startPending({ ...state, playing: true }, jump(pending, at));
       // A click is a retry: a failed track gets another go.
       const retried = new Set(failed);
       retried.delete(action.id);
