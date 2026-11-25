@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Civitai Radio — style directions</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--foreground, #ddd); font: 13px/1.4 var(--font-sans, system-ui, sans-serif); }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  .intro { color: var(--muted-foreground, #999); margin: 0 0 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .label { font-weight: 600; margin: 0 0 8px; letter-spacing: .02em; }
+  .label small { font-weight: 400; opacity: .6; margin-left: 6px; }
+  .frame { border-radius: 10px; overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .grow { flex: 1; min-width: 0; }
+  .ellip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ---------- A. Hi-Fi deck ---------- */
+  .a { background: linear-gradient(#cfd2d6, #a9adb3); color: #222; padding: 18px; font-family: "Helvetica Neue", Arial, sans-serif; }
+  .a .brand { font-size: 11px; letter-spacing: .3em; text-transform: uppercase; opacity: .7; }
+  .a .lcd { margin: 10px 0 14px; background: #1d2b1f; color: #8dff9a; border-radius: 6px; padding: 12px; font-family: "Courier New", monospace; box-shadow: inset 0 2px 6px #000a; text-shadow: 0 0 6px #8dff9a88; }
+  .a .lcd .big { font-size: 18px; }
+  .a .lcd .meta { display: flex; justify-content: space-between; font-size: 12px; opacity: .85; margin-top: 6px; }
+  .a .art { width: 64px; height: 64px; border-radius: 4px; background: conic-gradient(from 30deg, #ff8a5c, #8a5cff, #5cd6ff, #ff8a5c); filter: saturate(.6) brightness(.8); border: 2px solid #0006; }
+  .a .keys { display: flex; gap: 6px; }
+  .a .key { flex: 1; padding: 10px 0; text-align: center; border-radius: 4px; background: linear-gradient(#f4f5f6, #c4c7cc); box-shadow: 0 2px 0 #7b7f86, inset 0 1px 0 #fff; font-weight: 700; }
+  .a .key.on { background: linear-gradient(#e6e8eb, #b9bdc3); box-shadow: inset 0 2px 3px #0005; color: #c0392b; }
+  .a .queue { margin-top: 14px; background: #ffffff55; border-radius: 4px; padding: 6px 10px; font-size: 13px; }
+  .a .queue div { padding: 4px 0; border-bottom: 1px dashed #0002; }
+  .a .queue div:last-child { border: 0; }
+  .a select { width: 100%; margin-top: 10px; padding: 6px; border-radius: 4px; border: 1px solid #777; background: #eee; }
+
+  /* ---------- B. Clean dark, coral accent ---------- */
+  .b { background: #121214; color: #eee; padding: 20px; }
+  .b .art { aspect-ratio: 16/9; border-radius: 12px; background: radial-gradient(circle at 30% 30%, #ff7a59, #6a2bd9 60%, #121214); position: relative; }
+  .b .art .badge { position: absolute; top: 10px; left: 10px; background: #0009; padding: 2px 8px; border-radius: 99px; font-size: 11px; }
+  .b .title { font-size: 18px; font-weight: 700; margin-top: 14px; }
+  .b .by { opacity: .6; }
+  .b .bar { height: 4px; background: #333; border-radius: 2px; margin: 12px 0 4px; }
+  .b .bar i { display: block; width: 38%; height: 100%; background: #ff6b4a; border-radius: 2px; }
+  .b .times { display: flex; justify-content: space-between; font-size: 11px; opacity: .5; }
+  .b .ctl { display: flex; justify-content: center; align-items: center; gap: 22px; margin: 10px 0 16px; font-size: 18px; }
+  .b .ctl .on { color: #ff6b4a; }
+  .b .play { width: 52px; height: 52px; border-radius: 50%; background: #ff6b4a; color: #121214; display: grid; place-items: center; font-size: 20px; }
+  .b .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .b .chip { padding: 4px 10px; border-radius: 99px; background: #222; font-size: 12px; }
+  .b .chip.on { background: #ff6b4a22; color: #ff8c70; outline: 1px solid #ff6b4a66; }
+  .b .q { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+  .b .q .t { width: 36px; height: 36px; border-radius: 6px; background: linear-gradient(135deg, #3a3a44, #1e1e24); }
+  .b .q.now .t { background: linear-gradient(135deg, #ff7a59, #6a2bd9); }
+  .b .q .sub { font-size: 12px; opacity: .5; }
+
+  /* ---------- C. Tuner: warm, stations on a dial ---------- */
+  .c { background: radial-gradient(ellipse at top, #3a2516, #1a0f08); color: #f3dcc0; padding: 20px; font-family: Georgia, serif; }
+  .c .dial { position: relative; height: 54px; border-radius: 8px; background: linear-gradient(#f6e2b8, #e2c48c); color: #4a2e14; box-shadow: inset 0 0 12px #0006, 0 0 18px #ffb34744; overflow: hidden; }
+  .c .ticks { position: absolute; inset: 8px 12px auto; height: 12px; background: repeating-linear-gradient(90deg, #4a2e14 0 1px, transparent 1px 12px); opacity: .6; }
+  .c .stations { position: absolute; bottom: 8px; left: 12px; right: 12px; display: flex; justify-content: space-between; font-size: 11px; font-family: system-ui, sans-serif; }
+  .c .stations b { color: #b3261e; }
+  .c .needle { position: absolute; top: 0; bottom: 0; left: 41%; width: 2px; background: #c0261e; box-shadow: 0 0 6px #ff3b2f; }
+  .c .np { display: flex; gap: 14px; margin: 16px 0; align-items: center; }
+  .c .art { width: 84px; height: 84px; border-radius: 50%; background: repeating-radial-gradient(#111 0 2px, #222 2px 4px); position: relative; box-shadow: 0 4px 12px #0008; }
+  .c .art::after { content: ""; position: absolute; inset: 30px; border-radius: 50%; background: linear-gradient(135deg, #ffb347, #c0392b); }
+  .c .title { font-size: 19px; font-style: italic; }
+  .c .vu { display: flex; gap: 3px; align-items: flex-end; height: 22px; margin-top: 6px; }
+  .c .vu i { width: 5px; background: #ffb347; border-radius: 1px; }
+  .c .knobs { display: flex; justify-content: space-around; font-family: system-ui, sans-serif; font-size: 11px; text-align: center; }
+  .c .knob { width: 40px; height: 40px; margin: 0 auto 4px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #8a6a4a, #2a1a0e); box-shadow: 0 3px 6px #0009; display: grid; place-items: center; color: #ffd59a; font-size: 15px; }
+  .c .knob.on { box-shadow: 0 0 0 2px #ffb347, 0 3px 6px #0009; }
+  .c .queue { margin-top: 14px; border-top: 1px solid #f3dcc033; padding-top: 8px; font-size: 13px; }
+  .c .queue div { padding: 3px 0; opacity: .75; }
+  .c .queue div.now { opacity: 1; color: #ffb347; }
+
+  /* ---------- D. Neon / CRT ---------- */
+  .d { background: linear-gradient(160deg, #1a0633, #05010d 70%); color: #f0e6ff; padding: 20px; font-family: "Trebuchet MS", sans-serif; position: relative; }
+  .d::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(#fff1 0 1px, transparent 1px 3px); opacity: .25; }
+  .d .screen { aspect-ratio: 16/9; border-radius: 14px; background: linear-gradient(180deg, #ff4fd8 0%, #ff9a3c 45%, #2a0a4a 46%, #120326 100%); position: relative; box-shadow: 0 0 24px #ff4fd855; overflow: hidden; }
+  .d .screen::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 54%; background: repeating-linear-gradient(90deg, #ff4fd866 0 1px, transparent 1px 28px), repeating-linear-gradient(#ff4fd866 0 1px, transparent 1px 14px); }
+  .d .title { font-size: 20px; margin-top: 14px; color: #6ff3ff; text-shadow: 0 0 10px #6ff3ff99; letter-spacing: .04em; }
+  .d .by { color: #ff8ef0; }
+  .d .ctl { display: flex; gap: 8px; margin: 14px 0; }
+  .d .btn { flex: 1; text-align: center; padding: 8px 0; border: 1px solid #6ff3ff88; border-radius: 6px; color: #6ff3ff; }
+  .d .btn.on { background: #ff4fd833; border-color: #ff4fd8; color: #ffb3f4; box-shadow: 0 0 10px #ff4fd877; }
+  .d .btn.play { background: #6ff3ff; color: #120326; font-weight: 700; }
+  .d .tabs { display: flex; gap: 14px; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px; }
+  .d .tabs .on { color: #6ff3ff; border-bottom: 2px solid #6ff3ff; }
+  .d .q { display: flex; gap: 10px; font-size: 13px; padding: 4px 0; opacity: .7; }
+  .d .q.now { opacity: 1; color: #ffb3f4; }
+  .d .q span:first-child { width: 22px; opacity: .6; }
+</style>
+</head>
+<body>
+<h1>Civitai Radio: four style directions</h1>
+<p class="intro">Each mock shows the same parts: now playing with cover art or video, transport with shuffle and repeat, the queue, and picking a collection as the playlist. The art is placeholder gradients. Pick one, mix them, or say what to change.</p>
+
+<div class="grid">
+
+  <section>
+    <p class="label">A. Hi-Fi deck <small>brushed metal, green LCD, chunky keys</small></p>
+    <div class="frame a">
+      <div class="row"><span class="brand grow">Civitai Radio · Stereo</span><span class="brand">● REC-free</span></div>
+      <div class="lcd row">
+        <div class="art"></div>
+        <div class="grow">
+          <div class="big ellip">NEON RAIN ON MARS</div>
+          <div class="ellip">driftcat · Music Focus</div>
+          <div class="meta"><span>TRK 07/64</span><span>01:24 / 03:41</span><span>SHF RPT·ALL</span></div>
+        </div>
+      </div>
+      <div class="keys">
+        <div class="key">⏮</div><div class="key">⏯</div><div class="key">⏭</div>
+        <div class="key on">⤮</div><div class="key on">🔁</div>
+      </div>
+      <select><option>Playlist: Music Focus (64)</option></select>
+      <div class="queue">
+        <div>08 · Lo-fi lighthouse — tidewright</div>
+        <div>09 · Paper moons — hushmoth</div>
+        <div>10 · Static garden — fernhollow</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="label">B. Clean dark <small>big art, one coral accent, chips for playlists</small></p>
+    <div class="frame b">
+      <div class="art"><span class="badge">▶ VIDEO</span></div>
+      <div class="title ellip">Neon Rain on Mars</div>
+      <div class="by">driftcat</div>
+      <div class="bar"><i></i></div>
+      <div class="times"><span>1:24</span><span>3:41</span></div>
+      <div class="ctl"><span class="on">⤮</span><span>⏮</span><span class="play">❚❚</span><span>⏭</span><span class="on">🔁</span></div>
+      <div class="chips"><span class="chip on">Music Focus</span><span class="chip">My chill</span><span class="chip">Road trip</span><span class="chip">+ link</span></div>
+      <div class="q now"><span class="t"></span><div class="grow"><div class="ellip">Neon Rain on Mars</div><div class="sub">driftcat · now playing</div></div></div>
+      <div class="q"><span class="t"></span><div class="grow"><div class="ellip">Lo-fi lighthouse</div><div class="sub">tidewright</div></div></div>
+      <div class="q"><span class="t"></span><div class="grow"><div class="ellip">Paper moons</div><div class="sub">hushmoth</div></div></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="label">C. Tuner <small>warm valve radio, collections as stations on a dial</small></p>
+    <div class="frame c">
+      <div class="dial">
+        <div class="ticks"></div>
+        <div class="stations"><span>My chill</span><b>Music Focus</b><span>Road trip</span><span>Neon cities</span></div>
+        <div class="needle"></div>
+      </div>
+      <div class="np">
+        <div class="art"></div>
+        <div class="grow">
+          <div class="title ellip">Neon Rain on Mars</div>
+          <div style="opacity:.7">by driftcat</div>
+          <div class="vu"><i style="height:40%"></i><i style="height:70%"></i><i style="height:55%"></i><i style="height:90%"></i><i style="height:65%"></i><i style="height:35%"></i><i style="height:80%"></i><i style="height:50%"></i></div>
+        </div>
+      </div>
+      <div class="knobs">
+        <div><div class="knob on">⤮</div>Shuffle</div>
+        <div><div class="knob">⏮</div>Back</div>
+        <div><div class="knob">❚❚</div>Pause</div>
+        <div><div class="knob">⏭</div>Next</div>
+        <div><div class="knob on">🔁</div>Repeat</div>
+      </div>
+      <div class="queue">
+        <div class="now">♪ Neon Rain on Mars — driftcat</div>
+        <div>Lo-fi lighthouse — tidewright</div>
+        <div>Paper moons — hushmoth</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="label">D. Neon CRT <small>synthwave gradient, scanlines, cyan and magenta</small></p>
+    <div class="frame d">
+      <div class="screen"></div>
+      <div class="title ellip">NEON RAIN ON MARS</div>
+      <div class="by">driftcat · Music Focus</div>
+      <div class="ctl">
+        <div class="btn on">⤮</div><div class="btn">⏮</div><div class="btn play">❚❚</div><div class="btn">⏭</div><div class="btn on">🔁</div>
+      </div>
+      <div class="tabs"><span class="on">Queue</span><span>Playlists</span></div>
+      <div class="q now"><span>07</span><span class="grow ellip">Neon Rain on Mars — driftcat</span><span>3:41</span></div>
+      <div class="q"><span>08</span><span class="grow ellip">Lo-fi lighthouse — tidewright</span><span>2:58</span></div>
+      <div class="q"><span>09</span><span class="grow ellip">Paper moons — hushmoth</span><span>4:12</span></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
