@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 
-import { avatarUrl, formatCount, formatTime, stillUrl } from './media.js';
+import { avatarUrl, formatCount, formatTime, isTrustedMedia, stillUrl } from './media.js';
 
 const CDN = 'https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/0b1c2d3e-uuid/original=true/123456.mp4';
 
@@ -51,10 +51,21 @@ describe('avatarUrl', () => {
   });
 
   it('keeps a full URL and refuses what it cannot place', () => {
-    expect(avatarUrl('https://example.com/me.png', null)).toBe('https://example.com/me.png');
+    expect(avatarUrl('https://image.civitai.com/x/me.png', null)).toBe('https://image.civitai.com/x/me.png');
+    expect(avatarUrl('https://example.com/me.png', null)).toBeNull();
     expect(avatarUrl('abc', null)).toBeNull();
     expect(avatarUrl('abc', 'https://example.com/a/b.mp4')).toBeNull();
     expect(avatarUrl('../x', CDN)).toBeNull();
     expect(avatarUrl(null, CDN)).toBeNull();
   });
+});
+
+it('isTrustedMedia allows https on Civitai\'s domains only', () => {
+  expect(isTrustedMedia(CDN)).toBe(true);
+  expect(isTrustedMedia('https://image.civitai.red/a.mp4')).toBe(true);
+  expect(isTrustedMedia('http://image.civitai.com/a.mp4')).toBe(false);
+  expect(isTrustedMedia('https://civitai.com.evil.example/a.mp4')).toBe(false);
+  expect(isTrustedMedia('https://example.com/a.mp4')).toBe(false);
+  expect(isTrustedMedia('not a url')).toBe(false);
+  expect(isTrustedMedia(null)).toBe(false);
 });

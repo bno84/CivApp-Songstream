@@ -72,13 +72,29 @@ export function fitToVisibleHeight(root: HTMLElement = document.documentElement)
     // the frame scrolls, the last fit is kept rather than shrinking the app.
     if (top > 1) return;
     const clipped = bottom < window.innerHeight - 1;
-    const height = clipped ? bottom - HOST_BAR : window.innerHeight;
-    root.style.setProperty('--visible-height', `${Math.floor(height)}px`);
-    fits = height >= MIN_FIT;
+    if (clipped) {
+      const height = Math.floor(bottom - HOST_BAR);
+      root.style.setProperty('--visible-height', `${height}px`);
+      fits = height >= MIN_FIT;
+    } else {
+      // All of the frame is on screen: the CSS falls back to the live 100dvh,
+      // which follows every resize without a new measurement.
+      root.style.removeProperty('--visible-height');
+      fits = window.innerHeight >= MIN_FIT;
+    }
   }, { threshold: Array.from({ length: STEPS + 1 }, (_, i) => i / STEPS) });
   observer.observe(probe);
 
+  // A resize can change the visible part without changing the visible
+  // fraction, which the observer reports. Observing again forces a measurement.
+  const onResize = () => {
+    observer.unobserve(probe);
+    observer.observe(probe);
+  };
+  window.addEventListener('resize', onResize);
+
   return () => {
+    window.removeEventListener('resize', onResize);
     observer.disconnect();
     probe.remove();
     window.removeEventListener('wheel', onWheel);

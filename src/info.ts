@@ -4,7 +4,7 @@
 // and the next track), cached for the visit, and shared through a tiny store so
 // the queue rows can show titles as they arrive. React-free.
 
-import type { ApiClient, ImageInfo, ImageStats } from './api.js';
+import type { ApiClient, ImageInfo, ImageStats, UserInfo } from './api.js';
 import { avatarUrl } from './media.js';
 import type { Track } from './track.js';
 
@@ -117,8 +117,8 @@ const capitalise = (value: string) => value.charAt(0).toUpperCase() + value.slic
 
 export function createInfoStore(api: ApiClient): InfoStore {
   const entries = new Map<number, Info>();
-  // Avatars by creator id: one request per creator for the visit.
-  const avatars = new Map<number, Promise<string | null>>();
+  // Creators by id: one request per creator for the visit.
+  const users = new Map<number, Promise<UserInfo | null>>();
   const listeners = new Set<() => void>();
   let version = 0;
 
@@ -143,16 +143,15 @@ export function createInfoStore(api: ApiClient): InfoStore {
   function avatarFor(track: Track): Promise<string | null> {
     const userId = track.creator?.userId;
     if (userId == null) return Promise.resolve(null);
-    let found = avatars.get(userId);
+    let found = users.get(userId);
     if (!found) {
-      found = api.getUser(userId).then(user => {
-        // An avatar rated above what the viewer is seeing in this item stays hidden.
-        if (!user || (user.avatarNsfw ?? 1) > Math.max(1, track.nsfwLevel)) return null;
-        return avatarUrl(user.avatarUrl, track.url, 64);
-      }).catch(() => null);
-      avatars.set(userId, found);
+      found = api.getUser(userId).catch(() => null);
+      users.set(userId, found);
     }
-    return found;
+    // Checked for each track: an avatar rated above what the viewer is seeing
+    // in this item stays hidden here, whatever another track allowed.
+    return found.then(user =>
+      (!user || (user.avatarNsfw ?? 1) > Math.max(1, track.nsfwLevel) ? null : avatarUrl(user.avatarUrl, track.url, 64)));
   }
 
   async function fetchInfo(track: Track) {

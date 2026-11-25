@@ -120,7 +120,7 @@ export interface UserInfo {
 }
 
 export interface ApiClient {
-  listMine(cursor?: string): Promise<CollectionList>;
+  listMine(cursor?: string, signal?: AbortSignal): Promise<CollectionList>;
   getPage(id: number, cursor?: string, signal?: AbortSignal): Promise<CollectionPage>;
   /** `null` when Civitai does not list the image (removed, or hidden from the API). */
   getImage(id: number, nsfwLevel: number, signal?: AbortSignal): Promise<ImageInfo | null>;
@@ -215,8 +215,8 @@ export function createHttpClient({ origin, getToken, refreshToken }: HttpOptions
   }
 
   return {
-    listMine: cursor => request<CollectionList>('/api/v1/blocks/collections',
-      { mode: 'mine', limit: 100, cursor }),
+    listMine: (cursor, signal) => request<CollectionList>('/api/v1/blocks/collections',
+      { mode: 'mine', limit: 100, cursor }, { signal }),
     getPage: (id, cursor, signal) => request<CollectionPage>(`/api/v1/blocks/collections/${id}`,
       { limit: PAGE_SIZE, cursor }, { signal }),
     getImage: async (id, nsfwLevel, signal) => {
@@ -287,7 +287,7 @@ export async function readMyCollections(api: ApiClient, signal?: AbortSignal): P
   const seen = new Set<string>();
   let cursor: string | undefined;
   for (let page = 0; page < MAX_LIST_PAGES; page++) {
-    const result = await api.listMine(cursor);
+    const result = await api.listMine(cursor, signal);
     if (signal?.aborted) throw signal.reason;
     for (const item of result.items ?? []) found.set(item.id, item);
     if (result.nextCursor == null) break;
@@ -302,22 +302,23 @@ export async function readMyCollections(api: ApiClient, signal?: AbortSignal): P
 /**
  * Reads a collection page by page, handing each page to `onPage` as it lands so
  * playback can start before the whole collection is in. Ends at a missing or
- * repeated cursor, or at the page cap.
+ * repeated cursor, or at the page cap; `capped` says the cap cut it short.
  */
 export async function readCollection(api: ApiClient, id: number,
-  { signal, onPage }: { signal?: AbortSignal; onPage: (page: CollectionPage) => void }): Promise<void> {
+  { signal, onPage }: { signal?: AbortSignal; onPage: (page: CollectionPage) => void }): Promise<{ capped: boolean }> {
   const seen = new Set<string>();
   let cursor: string | undefined;
   for (let page = 0; page < MAX_PAGES; page++) {
     const result = await api.getPage(id, cursor, signal);
     if (signal?.aborted) throw signal.reason;
     onPage(result);
-    if (result.nextCursor == null) return;
+    if (result.nextCursor == null) return { capped: false };
     const next = String(result.nextCursor);
-    if (seen.has(next)) return;
+    if (seen.has(next)) return { capped: false };
     seen.add(next);
     cursor = next;
   }
+  return { capped: true };
 }
 
 const TYPE_LOOKUPS_AT_ONCE = 4;

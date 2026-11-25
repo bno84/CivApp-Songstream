@@ -80,7 +80,7 @@ describe('createInfoStore', () => {
     ]);
   });
 
-  it('adds the creator\'s avatar last, once per creator, unless it is rated above the item', async () => {
+  it('adds the creator\'s avatar last, one request per creator, hidden on items rated below it', async () => {
     const cdn = 'https://image.civitai.com/ns/abc/original=true/1.mp4';
     let userCalls = 0;
     const api = {
@@ -91,8 +91,8 @@ describe('createInfoStore', () => {
       },
     } as unknown as ApiClient;
     const store = createInfoStore(api);
-    const withAvatar = async (id: number, userId: number) => {
-      store.load({ ...track, id, url: cdn, creator: { userId, username: 'u' } });
+    const withAvatar = async (id: number, userId: number, nsfwLevel = track.nsfwLevel) => {
+      store.load({ ...track, id, url: cdn, nsfwLevel, creator: { userId, username: 'u' } });
       await settled(store, id);
       await new Promise(resolve => setTimeout(resolve, 0));
       const info = store.get(id);
@@ -101,6 +101,8 @@ describe('createInfoStore', () => {
     expect(await withAvatar(1, 1)).toBe('https://image.civitai.com/ns/face/width=64/avatar.jpeg');
     expect(await withAvatar(2, 1)).toBe('https://image.civitai.com/ns/face/width=64/avatar.jpeg');
     expect(await withAvatar(3, 2)).toBeNull();
+    // The same creator on a track rated as high as their avatar: shown, no new request.
+    expect(await withAvatar(4, 2, 8)).toBe('https://image.civitai.com/ns/spicy/width=64/avatar.jpeg');
     expect(userCalls).toBe(2);
   });
 

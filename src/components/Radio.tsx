@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
-import { playableCollections, readCollection, readMyCollections, type ApiClient, type CollectionPage } from '../api.js';
+import {
+  MAX_PAGES, PAGE_SIZE, playableCollections, readCollection, readMyCollections, type ApiClient, type CollectionPage,
+} from '../api.js';
 import { useKeyboard, useMediaSession } from '../controls.js';
 import { createInfoStore } from '../info.js';
 import { DEFAULT_PREFS, type Memory, type Prefs, type RecentStation } from '../memory.js';
@@ -18,12 +20,15 @@ import { StationBar, type Station } from './StationBar.js';
 /** The default station: a public collection curated for music. */
 const FEATURED: Station = { id: 17980935, name: 'Music Focus', source: 'featured' };
 
+/** Shuffled pages that are held join early when fewer tracks than this are left to play. */
+const LOW_WATER = 10;
+
 /** The longest the app waits for what it remembers before starting without it. */
 const MEMORY_WAIT_MS = 2000;
 
 type Load =
   | { id: number; status: 'loading' }
-  | { id: number; status: 'ready'; playable: number; skipped: number; done: boolean }
+  | { id: number; status: 'ready'; playable: number; skipped: number; done: boolean; capped?: boolean }
   | { id: number; status: 'error'; message: string };
 
 interface Start {
@@ -90,9 +95,18 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   const onPage = useEffectEvent((id: number, page: CollectionPage, first: boolean, held: Track[]) => {
     const tracks = toTracks(page.items);
     const skipped = page.items.length - tracks.length;
-    if (first) player.load(tracks);
-    else if (player.queue.shuffle) held.push(...tracks);
-    else player.append(tracks);
+    if (first) {
+      player.load(tracks);
+    } else if (player.queue.shuffle) {
+      held.push(...tracks);
+      // Running out before the rest is read: shuffle in what is here now.
+      const { queue: q } = player;
+      if (q.order.length - q.pos - 1 < LOW_WATER) player.append(held.splice(0));
+    } else {
+      // In collection order: pages held while shuffle was on go first.
+      if (held.length) player.append(held.splice(0));
+      player.append(tracks);
+    }
     const name = page.collection?.name;
     const station = stations.find(entry => entry.id === id);
     if (first && name && station && station.name !== name) {
@@ -120,9 +134,9 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
         onPage(selected, page, first, held);
         first = false;
       },
-    }).then(() => {
+    }).then(({ capped }) => {
       if (held.length) appendHeld(held);
-      setLoad(state => (state.id === selected && state.status === 'ready' ? { ...state, done: true } : state));
+      setLoad(state => (state.id === selected && state.status === 'ready' ? { ...state, done: true, capped } : state));
     }).catch((error: unknown) => {
       if (controller.signal.aborted) return;
       // What was read before the failure still plays.
@@ -251,5 +265,8 @@ function barStatus(load: Load, name: string, playing: boolean): { text: string; 
   if (!playing) return null;
   if (load.status === 'loading') return { text: `Tuning in to ${name}…`, error: false };
   if (load.status === 'error') return { text: `${name}: ${load.message}`, error: true };
+  if (load.status === 'ready' && load.capped) {
+    return { text: `${name} is long: playing its first ${(MAX_PAGES * PAGE_SIZE).toLocaleString('en')} items.`, error: false };
+  }
   return null;
 }

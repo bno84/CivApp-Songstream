@@ -2,7 +2,7 @@
 // A playable item, as the player and the queue see it. React-free.
 
 import type { MediaItem, UserRef } from './api.js';
-import { isPlayable, stillUrl, type MediaType } from './media.js';
+import { isPlayable, isTrustedMedia, stillUrl, type MediaType } from './media.js';
 
 export interface Track {
   id: number;
@@ -14,9 +14,12 @@ export interface Track {
   nsfwLevel: number;
 }
 
-/** The playable items of a collection page; images and items without a file are skipped. */
+/**
+ * The playable items of a collection page. Images, items without a file, and
+ * files anywhere but on Civitai are skipped.
+ */
 export function toTracks(items: readonly MediaItem[]): Track[] {
-  return items.flatMap(item => (isPlayable(item.type) && item.url ? [{
+  return items.flatMap(item => (isPlayable(item.type) && isTrustedMedia(item.url) ? [{
     id: item.mediaId,
     type: item.type,
     url: item.url,

@@ -8,6 +8,26 @@ export const isPlayable = (type: MediaType) => type === 'video' || type === 'aud
 
 const CDN_HOST = /(^|\.)civitai\.com$/;
 
+/** Civitai's own domains: the only places media and avatars are loaded from. */
+const MEDIA_HOSTS = /(^|\.)(civitai\.(com|red|green)|civit\.ai)$/;
+/** The harness's CC0 sample clips. Development builds only. */
+const DEV_MEDIA_HOSTS: readonly string[] = import.meta.env.DEV ? ['interactive-examples.mdn.mozilla.net'] : [];
+
+/**
+ * Is this an https URL on Civitai? Anything else from the API is dropped
+ * rather than loaded, so an unexpected URL never shows the viewer's request to
+ * a third party.
+ */
+export function isTrustedMedia(url: string | null | undefined): url is string {
+  if (!url) return false;
+  try {
+    const { protocol, hostname } = new URL(url);
+    return protocol === 'https:' && (MEDIA_HOSTS.test(hostname) || DEV_MEDIA_HOSTS.includes(hostname));
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Swaps the transform segment of a CDN link (`original=true`, `width=450`, …)
  * for `params`, and optionally the file extension. Links off the CDN, or that
@@ -48,7 +68,7 @@ export function stillUrl(url: string | null, type: MediaType, width = 320): stri
  */
 export function avatarUrl(key: string | null | undefined, cdnSample: string | null, size = 64): string | null {
   if (!key) return null;
-  if (/^https:\/\//.test(key)) return key;
+  if (/^https:\/\//.test(key)) return isTrustedMedia(key) ? key : null;
   if (!/^[\w-]+$/.test(key) || !cdnSample) return null;
   let sample: URL;
   try {

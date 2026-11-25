@@ -7,9 +7,10 @@ Media control button support, playlists, shuffle.
 
 ## Features
 
-- **Playlists are Civitai collections.** The Music Focus collection plays by
-  default; your own collections sit beside it, and any public collection opens
-  from its link.
+- **Playlists are Civitai collections.** The Music Focus collection is
+  selected on your first visit (press Play to start); your own collections sit
+  beside it, and any public collection opens from its link. A collection longer
+  than 5,000 items plays its first 5,000.
 - **Player:** play and pause, previous and next, seek, volume, shuffle, and
   repeat all, one or off.
 - **Queue:** one list in play order. What already played is darkened, and any

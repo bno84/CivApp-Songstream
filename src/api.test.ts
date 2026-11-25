@@ -73,7 +73,7 @@ describe('readCollection', () => {
   it('hands over each page and stops at a repeated cursor', async () => {
     const api = { getPage: async (_id: number, cursor?: string) => page(cursor) } as unknown as ApiClient;
     const pages: CollectionPage[] = [];
-    await readCollection(api, 1, { onPage: result => pages.push(result) });
+    await expect(readCollection(api, 1, { onPage: result => pages.push(result) })).resolves.toEqual({ capped: false });
     expect(pages.map(result => result.items[0].mediaId)).toEqual([1, 2]);
   });
 });
