@@ -3,8 +3,7 @@
 A Civitai app that feels like a music player.
 Media control button support, playlists, shuffle.
 
-**Status:** in development. The player works against a mock host; it has not
-yet run inside Civitai.
+**Status:** in development, tried inside Civitai through the dev tunnel.
 
 ## Features
 
@@ -26,8 +25,10 @@ It asks only for `collections:read:self`, so there is no consent prompt.
 
 ## Limits
 
-- **Videos only.** Collections hold images and videos, not audio yet. Images
-  are skipped.
+- **Videos.** Civitai hosts images and videos, not audio, so the app plays the
+  videos in a collection and skips its images.
+- **One click to start.** Civitai's frame does not allow autoplay. After that
+  click, media keys and the lock screen work.
 - **Titles, reactions and durations arrive late.** Collection items carry none
   of them, so the app looks each track up as it plays.
 - **Comments open on Civitai.** Apps cannot read them.
