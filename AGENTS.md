@@ -20,7 +20,12 @@
   `/model-versions/{id}` routes, without the block token.
 - Logic lives in React-free, tested modules: `queue.ts` (play order, shuffle,
   repeat), `info.ts` (per-track details store), `memory.ts` (what is remembered
-  between visits), `media.ts`, `track.ts`.
+  between visits), `usage.ts` (aggregate analytics events), `media.ts`, `track.ts`.
+- Usage analytics go only through `useBlockAnalytics().track`, against the
+  manifest's `analytics.events`. Properties are coarse enums, booleans and
+  counts (plays, seconds): never ids, titles, URLs or prompts. New events need a new reviewed version;
+  until it is approved, they are dropped. Keep `BUDGET` under the host's 500
+  events per mount.
 - `src/memory.ts` runs on the `blocks-react` token, not a bare `initialize()`,
   and falls back to in-memory on any refusal: the store refuses until the app
   is approved. Storage collection names allow only `[a-z0-9_]`; renaming one,

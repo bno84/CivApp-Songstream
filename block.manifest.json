@@ -31,6 +31,63 @@
       }
     }
   },
+  "analytics": {
+    "events": {
+      "playback": {
+        "description": "Playback, batched: tracks that really started and seconds played since the last batch, with the playlist kind and play mode.",
+        "properties": {
+          "source": {
+            "type": "enum",
+            "values": [
+              "featured",
+              "favorites",
+              "mine",
+              "link"
+            ]
+          },
+          "shuffle": {
+            "type": "boolean"
+          },
+          "repeat": {
+            "type": "enum",
+            "values": [
+              "off",
+              "all",
+              "one"
+            ]
+          },
+          "first_of_visit": {
+            "type": "boolean"
+          },
+          "plays": {
+            "type": "number"
+          },
+          "seconds": {
+            "type": "number"
+          }
+        }
+      },
+      "favorite_changed": {
+        "description": "The viewer starred or unstarred a track, and where they clicked.",
+        "properties": {
+          "action": {
+            "type": "enum",
+            "values": [
+              "add",
+              "remove"
+            ]
+          },
+          "place": {
+            "type": "enum",
+            "values": [
+              "now_playing",
+              "queue"
+            ]
+          }
+        }
+      }
+    }
+  },
   "page": {
     "path": "/",
     "title": "Songstream",

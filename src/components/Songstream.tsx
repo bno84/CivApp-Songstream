@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
+import { useBlockAnalytics } from '@civitai/blocks-react';
+
 import {
   ApiError, MAX_PAGES, PAGE_SIZE, playableCollections, readCollection, readMyCollections, type ApiClient, type CollectionPage,
 } from '../api.js';
@@ -10,6 +12,7 @@ import { DEFAULT_PREFS, FAVORITES_ID, type Memory, type Prefs, type RecentPlayli
 import { usePlayer } from '../player.js';
 import { advance, current } from '../queue.js';
 import { toTracks, trackTitle, type Track } from '../track.js';
+import { createUsageMeter, type FavoritePlace } from '../usage.js';
 import { Controls } from './Controls.js';
 import { NowPlaying } from './NowPlaying.js';
 import { Panel } from './Panel.js';
@@ -72,11 +75,22 @@ function initialPlaylists({ prefs, recent }: Start): Playlist[] {
 
 function SongstreamPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; start: Start }) {
   const mediaRef = useRef<HTMLVideoElement>(null);
-  const player = usePlayer(mediaRef, start.prefs);
+  const { track: send } = useBlockAnalytics();
+  const meter = useMemo(() => createUsageMeter(send), [send]);
+  const [playlists, setPlaylists] = useState<Playlist[]>(() => initialPlaylists(start));
+  const player = usePlayer(mediaRef, start.prefs, {
+    playing: (play, { playlist: id, shuffle, repeat }) => {
+      // Only the playlist's kind is counted. One no longer listed while it plays
+      // was opened by link, then forgotten.
+      const source = playlists.find(entry => entry.id === id)?.source ?? 'link';
+      meter.started(play, { source, shuffle, repeat });
+    },
+    progress: meter.progress,
+    halted: meter.halted,
+  });
   const infos = useMemo(() => createInfoStore(api), [api]);
   const infosVersion = useSyncExternalStore(infos.subscribe, infos.version);
 
-  const [playlists, setPlaylists] = useState<Playlist[]>(() => initialPlaylists(start));
   const [selected, setSelected] = useState(start.prefs.playlist ?? FEATURED.id);
   const [load, setLoad] = useState<Load>({ id: start.prefs.playlist ?? FEATURED.id, status: 'loading' });
   const collectionReadRef = useRef<AbortController | null>(null);
@@ -88,9 +102,10 @@ function SongstreamPlayer({ api, memory, start }: { api: ApiClient; memory: Memo
 
   const { append, remove } = player;
   const favoritesActive = selected === FAVORITES_ID && load.status === 'ready';
-  const toggleFavorite = useCallback((track: Track) => {
+  const toggleFavorite = useCallback((track: Track, place: FavoritePlace) => {
     if (!favoritesReady) return;
     const starred = !favoriteIds.has(track.id);
+    meter.favorite(starred, place);
     setFavorites(tracks => starred ? [track, ...(tracks ?? [])] : tracks?.filter(item => item.id !== track.id) ?? []);
     if (favoritesActive) {
       if (starred) append([track]);
@@ -99,7 +114,7 @@ function SongstreamPlayer({ api, memory, start }: { api: ApiClient; memory: Memo
     void memory.setFavorite(track, starred).then(saved => {
       if (!saved) setFavoritesUnsaved(true);
     });
-  }, [favoriteIds, favoritesReady, favoritesActive, memory, append, remove]);
+  }, [favoriteIds, favoritesReady, favoritesActive, memory, append, remove, meter]);
 
   const tuneToFavorites = (tracks: Track[]) => {
     player.load(FAVORITES_ID, tracks, true);
@@ -215,15 +230,19 @@ function SongstreamPlayer({ api, memory, start }: { api: ApiClient; memory: Memo
 
   // A change made just before leaving is written straight away.
   useEffect(() => {
-    const flush = () => void memory.flush();
+    const flush = () => {
+      meter.flush();
+      void memory.flush();
+    };
     const onHidden = () => { if (document.visibilityState === 'hidden') flush(); };
     window.addEventListener('pagehide', flush);
     document.addEventListener('visibilitychange', onHidden);
     return () => {
       window.removeEventListener('pagehide', flush);
       document.removeEventListener('visibilitychange', onHidden);
+      meter.flush();
     };
-  }, [memory]);
+  }, [memory, meter]);
 
   const select = (id: PlaylistId) => {
     if (id === selected) return;
@@ -285,14 +304,14 @@ function SongstreamPlayer({ api, memory, start }: { api: ApiClient; memory: Memo
         <div className="player-column">
           <Stage player={player} mediaRef={mediaRef} status={statusText(load, selected)} />
           <NowPlaying track={track} title={title} info={info} reactTicket={track ? reactionTickets.get(track.id) : undefined}
-            starred={track != null && favoriteIds.has(track.id)} toggleFavorite={favoritesReady ? toggleFavorite : undefined} />
+            starred={track != null && favoriteIds.has(track.id)} toggleFavorite={favoritesReady ? track => toggleFavorite(track, 'now_playing') : undefined} />
           <Controls player={player} />
         </div>
         <Panel key={selected} queue={selectedQueue} activeQueue={showingActiveQueue} track={track}
           emptyMessage={statusText(load, selected) ?? 'Nothing queued yet.'}
           durations={player.durations} playing={player.playing}
           jumpTo={player.jumpTo} infos={infos} infosVersion={infosVersion} favoriteIds={favoriteIds}
-          toggleFavorite={favoritesReady ? toggleFavorite : undefined} />
+          toggleFavorite={favoritesReady ? track => toggleFavorite(track, 'queue') : undefined} />
       </div>
     </div>
   );

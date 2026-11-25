@@ -36,6 +36,18 @@ Browsing and saving Favorites need no consent prompt. Songstream asks for
 once Civitai approves the app. Until then, favorites and settings last for the
 current visit.
 
+### Usage counts
+
+Songstream sends Civitai's own app analytics a few aggregate counts, so its
+author can see how much it is used: how many tracks really started playing and
+how long they played (in seconds, sent together every 30 seconds at first and
+less often later), and stars added or removed. Each event carries only coarse
+categories, such as the kind of playlist (featured, Favorites, your own, opened
+by link) and shuffle or repeat. It never carries a viewer, video or collection
+id, a title, a URL or a prompt, and nothing goes to any other service. The
+declaration is `analytics` in [block.manifest.json](block.manifest.json); the
+code is [src/usage.ts](src/usage.ts).
+
 ## Limits
 
 - **Videos.** Civitai hosts images and videos, not audio, so the app plays the

@@ -8,6 +8,7 @@ import { initialPlayback, playbackReducer } from './playback.js';
 import type { PlaylistId } from './memory.js';
 import { current, type Queue, type Repeat } from './queue.js';
 import type { Track } from './track.js';
+import type { PlaybackListener } from './usage.js';
 
 /** Back within this many seconds of the start goes to the previous track; later, it restarts this one. */
 const RESTART_AFTER = 3;
@@ -58,8 +59,10 @@ export interface Player {
   /** Spread onto the `<video>` element. */
   mediaProps: {
     onPlay: () => void;
+    onPlaying: () => void;
     onPause: (event: SyntheticEvent<HTMLVideoElement>) => void;
     onEnded: () => void;
+    onSeeking: () => void;
     onTimeUpdate: (event: SyntheticEvent<HTMLVideoElement>) => void;
     onDurationChange: (event: SyntheticEvent<HTMLVideoElement>) => void;
     onVolumeChange: (event: SyntheticEvent<HTMLVideoElement>) => void;
@@ -75,8 +78,13 @@ export interface PlayerStart {
   muted?: boolean;
 }
 
+/**
+ * @param listener Told when a play really starts and how far it gets, for the
+ *   usage counts (usage.ts).
+ */
 export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
-  { shuffle = true, repeat = 'all', volume: startVolume = 1, muted: startMuted = false }: PlayerStart = {}): Player {
+  { shuffle = true, repeat = 'all', volume: startVolume = 1, muted: startMuted = false }: PlayerStart = {},
+  listener?: PlaybackListener): Player {
   const [state, dispatch] = useReducer(playbackReducer, { shuffle, repeat }, initialPlayback);
   const { queue, playlist, pending, playing, restarts, failed, stuck } = state;
   const [time, setTime] = useState(0);
@@ -104,6 +112,8 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
 
   // Keep the element in step with the track and the intent.
   const shownRef = useRef<{ id: number; url: string; restarts: number } | null>(null);
+  // Numbers each play: another track, or the same one from the top again.
+  const playRef = useRef(0);
   useEffect(() => {
     const media = mediaRef.current;
     if (!media) return;
@@ -125,6 +135,7 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
     } else if (shown?.id === track.id && shown.restarts !== restarts) {
       media.currentTime = 0;
     }
+    if (shown?.id !== track.id || shown.restarts !== restarts) playRef.current++;
     shownRef.current = { id: track.id, url: track.url, restarts };
     if (playing && media.paused) media.play().catch(onRefused);
     else if (!playing && !media.paused) media.pause();
@@ -218,12 +229,22 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
     },
     mediaProps: {
       onPlay: () => dispatch({ type: 'play' }),
+      onPlaying: () => listener?.playing(playRef.current, { playlist, shuffle: queue.shuffle, repeat: queue.repeat }),
       // The element pauses itself just before `ended`; that is not the viewer pausing.
       onPause: event => {
+        listener?.halted();
         if (!event.currentTarget.ended) dispatch({ type: 'pause' });
       },
-      onEnded: () => dispatch({ type: 'ended' }),
-      onTimeUpdate: event => setTime(event.currentTarget.currentTime),
+      onEnded: () => {
+        listener?.halted();
+        dispatch({ type: 'ended' });
+      },
+      onSeeking: () => listener?.halted(),
+      onTimeUpdate: event => {
+        const media = event.currentTarget;
+        setTime(media.currentTime);
+        if (!media.paused && !media.seeking) listener?.progress(playRef.current, media.currentTime);
+      },
       onDurationChange: event => {
         const { duration } = event.currentTarget;
         if (trackId == null || !Number.isFinite(duration) || duration <= 0) return;
