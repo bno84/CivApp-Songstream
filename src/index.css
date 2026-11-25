@@ -521,23 +521,9 @@ button.pill:hover {
   margin-top: 8px;
 }
 
-.keys {
-  display: flex;
-  gap: 6px;
-}
-
-kbd {
-  padding: 1px 6px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  color: var(--dim);
-  font-family: inherit;
-  font-size: 11px;
-  line-height: 1.6;
-}
-
 .transport {
   display: flex;
+  grid-column: 2;
   align-items: center;
   gap: 14px;
 }
@@ -875,9 +861,6 @@ kbd {
     grid-template-columns: minmax(0, 1fr) 320px;
   }
 
-  .keys {
-    visibility: hidden;
-  }
 }
 
 @container app (max-width: 768px) {
@@ -912,8 +895,8 @@ kbd {
     grid-template-columns: auto 1fr;
   }
 
-  .keys {
-    display: none;
+  .transport {
+    grid-column: 1;
   }
 
   .add-station input {

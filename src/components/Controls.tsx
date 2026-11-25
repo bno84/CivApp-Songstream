@@ -26,10 +26,6 @@ export function Controls({ player }: { player: Player }) {
         <span className="time">{formatTime(duration)}</span>
       </div>
       <div className="control-row">
-        <div className="keys" aria-hidden="true">
-          <kbd title="Play or pause">Space</kbd>
-          <kbd title="Seek; with Shift, previous or next">← →</kbd>
-        </div>
         <div className="transport">
           <button type="button" className={`icon-button${shuffle ? ' on' : ''}`} onClick={player.toggleShuffle}
             aria-pressed={shuffle} title={shuffle ? 'Shuffle on' : 'Shuffle off'} aria-label="Shuffle">
