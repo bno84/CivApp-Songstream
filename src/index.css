@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
 :root {
   /* DARK FIRST, matching `<meta name="color-scheme" content="dark light">` in
      index.html. This property OVERRIDES the meta once the bundle lands, so the

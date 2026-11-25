@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // The host -> block readiness handshake. Imported FIRST, for its side effect,
 // and left alone: without it the Civitai host never reveals this app. See the
 // comments in civitai-host.js.

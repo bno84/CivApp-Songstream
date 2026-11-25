@@ -26,5 +26,10 @@
       "version": "12.3.4",
       "onFail": "download"
     }
+  },
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bno84/CivApp-CivRadio.git"
   }
 }

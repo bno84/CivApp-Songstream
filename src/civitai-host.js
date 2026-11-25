@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // civitai-host.js — the block -> host readiness handshake. Do not delete.
 //
 // WHAT THIS IS

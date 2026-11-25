@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Dev-server embeddability for `civitai app dev-tunnel`.
 //
 // The dev tunnel serves THIS local dev server as a `dev-<16hex>.civit.ai` host

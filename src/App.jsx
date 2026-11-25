@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { useState } from 'react';
 
 // Civitai Radio — Civitai App (vite + React page template).
