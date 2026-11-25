@@ -72,7 +72,18 @@ today the app asks the public collection route for every collection's type to
 leave out Model, Post and Article collections. This saves requests; the app
 works without it.
 
-### 6. Document-store previews with the React host bridge
+### 6. Public generation resource credits
+
+**Today:** Radio can show resources listed in public image metadata.
+Civitai's item page can show additional credits from its generation-data
+service. For example, video 148146593 shows two checkpoints and a workflow on
+its item page, while the public images endpoint returns an empty
+`modelVersionIds` list for it.
+
+**Want:** expose the item page's visible resource credits through the public or
+App API, including resources the creator added by hand.
+
+### 7. Document-store previews with the React host bridge
 
 **Today:** tunnel tokens omit storage scopes. The SDK's built-in local preview
 needs the host's `storageMode` from its own bridge, which `blocks-react` does

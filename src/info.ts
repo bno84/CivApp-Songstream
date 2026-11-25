@@ -51,7 +51,7 @@ export interface InfoStore {
 const MAX_RESOURCES = 8;
 
 const SETTINGS: [key: string, label: string][] = [
-  ['workflow', 'Workflow'], ['ecosystem', 'Ecosystem'], ['baseModel', 'Base model'],
+  ['engine', 'Engine'], ['workflow', 'Workflow'], ['ecosystem', 'Ecosystem'], ['baseModel', 'Base model'],
   ['sampler', 'Sampler'], ['scheduler', 'Scheduler'], ['steps', 'Steps'], ['cfgScale', 'CFG'],
   ['seed', 'Seed'], ['Size', 'Size'], ['clipSkip', 'Clip skip'], ['denoise', 'Denoise'],
 ];
@@ -89,6 +89,21 @@ function unwrap(meta: ImageInfo['meta']): Record<string, unknown> | null {
   return meta;
 }
 
+/** The public image API can return the ComfyUI metadata as JSON text. */
+function comfyNodeCount(value: unknown): number | null {
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  if (!value || typeof value !== 'object' || !('workflow' in value)) return null;
+  const { workflow } = value;
+  if (!workflow || typeof workflow !== 'object' || !('nodes' in workflow) || !Array.isArray(workflow.nodes)) return null;
+  return workflow.nodes.length || null;
+}
+
 /**
  * Generation data from an image, or `null` when there is none worth showing.
  * The free-form meta comes first. The image's own `baseModel` and
@@ -104,6 +119,8 @@ export function readGeneration(image: Pick<ImageInfo, 'meta' | 'baseModel' | 'mo
     const value = text(meta[key]);
     return value ? [[label, value]] : [];
   });
+  const nodes = comfyNodeCount(meta.comfy);
+  if (nodes !== null) settings.push(['ComfyUI workflow', `${nodes} ${nodes === 1 ? 'node' : 'nodes'}`]);
   let refs = resourceRefs(meta);
   if (!refs.length && Array.isArray(image.modelVersionIds)) {
     refs = image.modelVersionIds.filter(id => Number.isSafeInteger(id)).slice(0, MAX_RESOURCES)

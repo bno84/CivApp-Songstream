@@ -50,6 +50,17 @@ describe('readGeneration', () => {
     });
   });
 
+  it('shows the engine and workflow count when a ComfyUI video has no resource IDs', () => {
+    const comfy = { prompt: { '1': {} }, workflow: { nodes: Array.from({ length: 10 }, () => ({})) } };
+    expect(readGeneration({
+      meta: { id: 148146593, meta: { engine: 'ComfyUI', comfy: JSON.stringify(comfy) } },
+      baseModel: 'YuE2',
+      modelVersionIds: [],
+    })).toMatchObject({ settings: [['Engine', 'ComfyUI'], ['Base model', 'YuE2'], ['ComfyUI workflow', '10 nodes']], refs: [] });
+    expect(readGeneration({ meta: { comfy } })?.settings).toEqual([['ComfyUI workflow', '10 nodes']]);
+    expect(readGeneration({ meta: { engine: 'ComfyUI', comfy: '{broken' } })?.settings).toEqual([['Engine', 'ComfyUI']]);
+  });
+
   it('has nothing for missing or empty meta', () => {
     expect(readGeneration({ meta: null })).toBeNull();
     expect(readGeneration({ meta: { id: 1, meta: null }, modelVersionIds: [] })).toBeNull();
