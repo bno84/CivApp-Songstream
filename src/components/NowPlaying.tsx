@@ -44,6 +44,12 @@ export function NowPlaying({ track, title, info, reactTicket, starred, toggleFav
   const reactionCounts = reactionState?.statsUnknown ? undefined : reactionState?.counts;
   const requestPermission = () => requestConsent({ scopes: [REACT_SCOPE] });
   const error = failure?.id === track.id ? failure.text : null;
+  const unavailableReason = permissionUnavailable ? 'Civitai cannot grant reaction permission in this session'
+    : granted && !reactionState && reactTicket
+      ? reactions.loading ? 'Loading your Civitai reactions'
+        : reactions.error?.code ? `Civitai could not load your reactions (${reactions.error.code})`
+          : 'Civitai did not return your reactions for this video'
+      : null;
   return (
     <div className="now-playing">
       <div className="now-title">
@@ -64,11 +70,14 @@ export function NowPlaying({ track, title, info, reactTicket, starred, toggleFav
           const count = reactionCounts?.[reaction] ?? (stats ? stats[key] ?? 0 : null);
           const label = count == null ? reaction : `${count} ${noun}`;
           const contents = <><span aria-hidden="true">{emoji}</span> {count == null ? '·' : formatCount(count)}</>;
-          if (!reactTicket) return <span key={key} className="pill" aria-label={label} title={label}>{contents}</span>;
+          if (!reactTicket) {
+            return <span key={key} className="pill" aria-label={label}
+              title={`${label}. Civitai did not supply a reaction ticket for this video.`}>{contents}</span>;
+          }
           const reacted = reactionState?.viewerReactions.includes(reaction);
           return (
             <button key={key} type="button" className="pill" aria-label={`${reaction} on Civitai (${label})`}
-              aria-pressed={reacted} title={granted ? label : 'Allow Civitai reactions'}
+              aria-pressed={reacted} title={unavailableReason ?? (granted ? label : 'Allow Civitai reactions')}
               disabled={permissionUnavailable || (granted && (!reactionState || reactions.pending(track.id, reaction)))}
               onClick={() => {
                 setFailure(null);
