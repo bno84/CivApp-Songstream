@@ -8,10 +8,11 @@ import { useOpen } from '../open.js';
  * not an `<a>`: the sandbox cannot navigate anywhere itself. A middle click
  * opens it too, as it would a link, and does not start the browser's autoscroll.
  */
-export function CivitaiLink({ path, className, title, children }: {
+export function CivitaiLink({ path, className, title, ariaLabel, children }: {
   path: string;
   className?: string;
   title?: string;
+  ariaLabel?: string;
   children: ReactNode;
 }) {
   const open = useOpen();
@@ -20,6 +21,7 @@ export function CivitaiLink({ path, className, title, children }: {
       type="button"
       className={className}
       title={title}
+      aria-label={ariaLabel}
       onClick={() => open(path)}
       onMouseDown={event => { if (event.button === 1) event.preventDefault(); }}
       onAuxClick={event => {

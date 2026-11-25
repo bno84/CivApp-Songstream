@@ -99,8 +99,9 @@ export function NowPlaying({ track, title, info, reactTicket, starred, toggleFav
         <CivitaiLink path={imagePath(track.id)} className="pill" title="Comments open on Civitai">
           <Icon name="comment" size={16} /> {stats ? formatCount(stats.commentCount ?? 0) : '·'}
         </CivitaiLink>
-        <CivitaiLink path={imagePath(track.id)} className="pill">
-          Open on Civitai <Icon name="external" size={14} />
+        <CivitaiLink path={imagePath(track.id)} className="pill open-on-civitai"
+          title="Open on Civitai" ariaLabel="Open on Civitai">
+          <span>Open on Civitai</span><Icon name="external" size={14} />
         </CivitaiLink>
       </div>
       {error && <span className="reaction-error" role="status">{error}</span>}
