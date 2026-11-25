@@ -7,10 +7,12 @@ Media control button support, playlists, shuffle.
 
 ## Features
 
-- **Playlists are Civitai collections.** The Music Focus collection is
+- **Collection playlists.** The Music Focus collection is
   selected on your first visit (press Play to start); your own collections sit
   beside it, and any public collection opens from its link. A collection longer
   than 5,000 items plays its first 5,000.
+- **Favorites.** Use the star in Now Playing or the queue to save a track to
+  your private Favorites playlist. Click a filled star to remove it.
 - **Player:** play and pause, previous and next, seek, volume, shuffle, and
   repeat all, one or off.
 - **Queue:** one list in play order. What already played is darkened, and any
@@ -28,7 +30,7 @@ Media control button support, playlists, shuffle.
 
 It asks only for `collections:read:self` and `apps:storage`, so there is no
 consent prompt. Remembering starts working once Civitai approves the app; until
-then each visit starts fresh.
+then favorites and settings last for the current visit.
 
 ## Limits
 

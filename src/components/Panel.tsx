@@ -6,6 +6,7 @@ import { formatTime } from '../media.js';
 import { entries, type Queue } from '../queue.js';
 import { trackTitle, type Track } from '../track.js';
 import { Details } from './Details.js';
+import { FavoriteButton } from './FavoriteButton.js';
 
 type Tab = 'queue' | 'details';
 const TABS: Tab[] = ['queue', 'details'];
@@ -19,6 +20,8 @@ interface PanelProps {
   infos: InfoStore;
   /** The store's version: the panel shows titles from it, so it renders again when it changes. */
   infosVersion: number;
+  favoriteIds: ReadonlySet<number>;
+  toggleFavorite: ((track: Track) => void) | undefined;
 }
 
 /**
@@ -26,7 +29,7 @@ interface PanelProps {
  * item's details. Memoised: it does not render again on every time update,
  * which would rebuild thousands of queue rows a few times a second.
  */
-export const Panel = memo(function Panel({ queue, track, durations, playing, jumpTo, infos }: PanelProps) {
+export const Panel = memo(function Panel({ queue, track, durations, playing, jumpTo, infos, favoriteIds, toggleFavorite }: PanelProps) {
   const [tab, setTab] = useState<Tab>('queue');
   const count = queue.order.length;
 
@@ -63,15 +66,16 @@ export const Panel = memo(function Panel({ queue, track, durations, playing, jum
       </div>
       <div className="panel-body" role="tabpanel" id={`tabpanel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === 'queue'
-          ? <QueueList queue={queue} durations={durations} playing={playing} jumpTo={jumpTo} infos={infos} />
+          ? <QueueList queue={queue} durations={durations} playing={playing} jumpTo={jumpTo} infos={infos}
+              favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} />
           : <Details track={track} infos={infos} />}
       </div>
     </section>
   );
 });
 
-function QueueList({ queue, durations, playing, jumpTo, infos }:
-  Pick<PanelProps, 'queue' | 'durations' | 'playing' | 'jumpTo' | 'infos'>) {
+function QueueList({ queue, durations, playing, jumpTo, infos, favoriteIds, toggleFavorite }:
+  Pick<PanelProps, 'queue' | 'durations' | 'playing' | 'jumpTo' | 'infos' | 'favoriteIds' | 'toggleFavorite'>) {
   const listRef = useRef<HTMLOListElement>(null);
   const rows = entries(queue);
 
@@ -102,7 +106,7 @@ function QueueList({ queue, durations, playing, jumpTo, infos }:
         const duration = durations.get(item.id);
         return (
           <li key={item.id} className={`queue-row ${state}`} aria-current={state === 'current'}>
-            <button type="button" onClick={() => jumpTo(item.id)} title={`Play ${title}`}>
+            <button type="button" className="queue-play" onClick={() => jumpTo(item.id)} title={`Play ${title}`}>
               <Thumb still={item.still} id={item.id} />
               <span className="queue-text">
                 <span className="ellipsis">{main}</span>
@@ -113,6 +117,8 @@ function QueueList({ queue, durations, playing, jumpTo, infos }:
               </span>
               {state === 'current' && <span className="now-badge">{playing ? '▶ now' : '❚❚'}</span>}
             </button>
+            <FavoriteButton title={known ?? creator} starred={favoriteIds.has(item.id)}
+              onToggle={toggleFavorite && (() => toggleFavorite(item))} />
           </li>
         );
       })}

@@ -26,6 +26,23 @@ describe('playbackReducer', () => {
     expect(now(state)).toBe(3);
   });
 
+  it('keeps the current track playing when a different favorite is removed', () => {
+    const state = run(playing([1, 2, 3, 4]), { type: 'next' },
+      { type: 'remove', id: 1 }, { type: 'remove', id: 3 });
+    expect(now(state)).toBe(2);
+    expect(state.playing).toBe(true);
+    expect(now(run(state, { type: 'next' }))).toBe(4);
+  });
+
+  it('advances after removing the current favorite and stops when the queue empties', () => {
+    const state = run(playing([1, 2]), { type: 'remove', id: 1 });
+    expect(now(state)).toBe(2);
+    expect(state.playing).toBe(true);
+    const empty = run(state, { type: 'remove', id: 2 });
+    expect(now(empty)).toBeNull();
+    expect(empty.playing).toBe(false);
+  });
+
   it('jumps by track id, so a row moved by a shuffled append still plays itself', () => {
     let state = run(initialPlayback({ shuffle: true }), { type: 'load', tracks: tracks(1, 2, 3) });
     state = run(state, { type: 'append', tracks: tracks(4, 5, 6) }, { type: 'jump', id: 2 });

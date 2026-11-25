@@ -48,8 +48,8 @@ const detail = (id: number, name: string, owner = curator): CollectionDetail =>
   ({ id, name, description: null, curator: owner, isPublic: true, followed: false });
 
 const COLLECTIONS: { detail: CollectionDetail; items: MediaItem[]; mine: boolean }[] = [
-  // Large enough to page, so "loading more…" and appending can be seen.
-  { detail: detail(17980935, 'Music Focus 🎸', { userId: 9, username: 'civitai-music' }), items: sample(230, 17, 0.1), mine: false },
+  // Large enough to page and owned by this viewer, so the bar exercises deduplication.
+  { detail: detail(17980935, 'Music Focus 🎸'), items: sample(230, 17, 0.1), mine: true },
   { detail: detail(101, 'My chill'), items: sample(14, 1), mine: true },
   { detail: detail(102, 'Road trip'), items: sample(40, 2, 0.3), mine: true },
   { detail: detail(103, 'Cozy interiors'), items: sample(12, 3, 1), mine: true },

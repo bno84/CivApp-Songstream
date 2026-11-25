@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
 import {
   MAX_PAGES, PAGE_SIZE, playableCollections, readCollection, readMyCollections, type ApiClient, type CollectionPage,
 } from '../api.js';
 import { useKeyboard, useMediaSession } from '../controls.js';
 import { createInfoStore } from '../info.js';
-import { DEFAULT_PREFS, type Memory, type Prefs, type RecentStation } from '../memory.js';
+import { DEFAULT_PREFS, FAVORITES_ID, type Memory, type Prefs, type RecentStation, type StationId } from '../memory.js';
 import { usePlayer } from '../player.js';
 import { advance, current } from '../queue.js';
 import { toTracks, trackTitle, type Track } from '../track.js';
@@ -19,6 +19,7 @@ import { StationBar, type Station } from './StationBar.js';
 
 /** The default station: a public collection curated for music. */
 const FEATURED: Station = { id: 17980935, name: 'Music Focus', source: 'featured' };
+const FAVORITES: Station = { id: FAVORITES_ID, name: 'Favorites', source: 'favorites' };
 
 /** Shuffled pages that are held join early when fewer tracks than this are left to play. */
 const LOW_WATER = 10;
@@ -27,9 +28,9 @@ const LOW_WATER = 10;
 const MEMORY_WAIT_MS = 2000;
 
 type Load =
-  | { id: number; status: 'loading' }
-  | { id: number; status: 'ready'; playable: number; skipped: number; done: boolean; capped?: boolean }
-  | { id: number; status: 'error'; message: string };
+  | { id: StationId; status: 'loading' }
+  | { id: StationId; status: 'ready'; playable: number; skipped: number; done: boolean; capped?: boolean }
+  | { id: StationId; status: 'error'; message: string };
 
 interface Start {
   prefs: Prefs;
@@ -58,11 +59,13 @@ export function Radio({ api, memory }: { api: ApiClient; memory: Memory }) {
 }
 
 function initialStations({ prefs, recent }: Start): Station[] {
-  const stations: Station[] = [FEATURED, ...recent.map(({ id, name }): Station => ({ id, name, source: 'link' }))];
+  const stations: Station[] = [FEATURED, FAVORITES, ...recent
+    .filter(({ id }) => id !== FEATURED.id)
+    .map(({ id, name }): Station => ({ id, name, source: 'link' }))];
   // The playlist that was on, if it is not listed yet: one of the viewer's own,
   // until their list loads and names it.
-  if (prefs.station != null && !stations.some(station => station.id === prefs.station)) {
-    stations.splice(1, 0, { id: prefs.station, name: `Collection ${prefs.station}`, source: 'mine' });
+  if (typeof prefs.station === 'number' && !stations.some(station => station.id === prefs.station)) {
+    stations.splice(2, 0, { id: prefs.station, name: `Collection ${prefs.station}`, source: 'mine' });
   }
   return stations;
 }
@@ -76,12 +79,47 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   const [stations, setStations] = useState<Station[]>(() => initialStations(start));
   const [selected, setSelected] = useState(start.prefs.station ?? FEATURED.id);
   const [load, setLoad] = useState<Load>({ id: start.prefs.station ?? FEATURED.id, status: 'loading' });
+  const collectionReadRef = useRef<AbortController | null>(null);
+  const [favorites, setFavorites] = useState<Track[] | null>(null);
+  const [favoritesUnsaved, setFavoritesUnsaved] = useState(false);
+  const favoriteIds = useMemo(() => new Set(favorites?.map(track => track.id)), [favorites]);
+  const favoritesReady = favorites !== null;
+
+  const { remove } = player;
+  const favoritesActive = selected === FAVORITES_ID && load.status === 'ready';
+  const toggleFavorite = useCallback((track: Track) => {
+    if (!favoritesReady) return;
+    const starred = !favoriteIds.has(track.id);
+    setFavorites(tracks => starred ? [track, ...(tracks ?? [])] : tracks?.filter(item => item.id !== track.id) ?? []);
+    if (!starred && favoritesActive) remove(track.id);
+    void memory.setFavorite(track, starred).then(saved => {
+      if (!saved) setFavoritesUnsaved(true);
+    });
+  }, [favoriteIds, favoritesReady, favoritesActive, memory, remove]);
+
+  const tuneToFavorites = (tracks: Track[]) => {
+    player.load(tracks);
+    if (!tracks.length) player.pause();
+    setLoad({ id: FAVORITES_ID, status: 'ready', playable: tracks.length, skipped: 0, done: true });
+  };
+
+  const onFavoritesLoaded = useEffectEvent((tracks: Track[]) => {
+    setFavorites(tracks);
+    if (selected === FAVORITES_ID) tuneToFavorites(tracks);
+  });
+
+  useEffect(() => {
+    let live = true;
+    void memory.favorites().then(tracks => { if (live) onFavoritesLoaded(tracks); });
+    return () => { live = false; };
+  }, [memory]);
 
   // The viewer's own collections become stations after the featured one.
   useEffect(() => {
     const controller = new AbortController();
     // Only those that can hold videos: Model, Post and Article collections play nothing.
-    readMyCollections(api, controller.signal).then(all => playableCollections(api, all, controller.signal)).then(mine => {
+    readMyCollections(api, controller.signal).then(all =>
+      playableCollections(api, all.filter(({ id }) => id !== FEATURED.id), controller.signal)).then(mine => {
       setStations(known => mergeStations(known, mine.map(({ id, name }): Station => ({ id, name, source: 'mine' }))));
     }).catch(() => {
       // Without them the featured station and links still work.
@@ -125,7 +163,9 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
 
   // Read the selected collection page by page; playback starts with the first.
   useEffect(() => {
+    if (selected === FAVORITES_ID) return;
     const controller = new AbortController();
+    collectionReadRef.current = controller;
     let first = true;
     const held: Track[] = [];
     readCollection(api, selected, {
@@ -135,6 +175,7 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
         first = false;
       },
     }).then(({ capped }) => {
+      if (controller.signal.aborted) return;
       if (held.length) appendHeld(held);
       setLoad(state => (state.id === selected && state.status === 'ready' ? { ...state, done: true, capped } : state));
     }).catch((error: unknown) => {
@@ -143,7 +184,10 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
       if (held.length) appendHeld(held);
       setLoad({ id: selected, status: 'error', message: error instanceof Error ? error.message : 'Could not load this playlist.' });
     });
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      collectionReadRef.current = null;
+    };
   }, [api, selected]);
 
   // Remember what the viewer changes. Only changes: the values this visit
@@ -175,10 +219,12 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
     };
   }, [memory]);
 
-  const select = (id: number) => {
+  const select = (id: StationId) => {
     if (id === selected) return;
+    collectionReadRef.current?.abort();
     setSelected(id);
-    setLoad({ id, status: 'loading' });
+    if (id === FAVORITES_ID && favorites) tuneToFavorites(favorites);
+    else setLoad({ id, status: 'loading' });
   };
 
   const openById = (id: number) => {
@@ -219,37 +265,41 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   return (
     <div className="radio">
       <StationBar stations={stations} selected={selected} onSelect={select} onOpen={openById} onForget={forget}
-        status={barStatus(load, station?.name ?? 'this playlist', Boolean(track))} />
+        status={barStatus(load, station?.name ?? 'this playlist', Boolean(track)) ??
+          (favoritesUnsaved ? { text: 'Some Favorites changes could only be kept for this visit.', error: true } : null)} />
       <div className="radio-main">
         <div className="player-column">
           <Stage player={player} mediaRef={mediaRef} status={statusText(load, selected)} />
-          <NowPlaying track={track} title={title} info={info} />
+          <NowPlaying track={track} title={title} info={info}
+            starred={track != null && favoriteIds.has(track.id)} toggleFavorite={favoritesReady ? toggleFavorite : undefined} />
           <Controls player={player} />
         </div>
         <Panel queue={queue} track={track} durations={player.durations} playing={player.playing}
-          jumpTo={player.jumpTo} infos={infos} infosVersion={infosVersion} />
+          jumpTo={player.jumpTo} infos={infos} infosVersion={infosVersion} favoriteIds={favoriteIds}
+          toggleFavorite={favoritesReady ? toggleFavorite : undefined} />
       </div>
     </div>
   );
 }
 
 /**
- * Featured first, then the viewer's own (as Civitai lists them now), then any
+ * Featured and Favorites first, then the viewer's own, then any
  * opened by link that are not their own.
  */
 function mergeStations(known: Station[], mine: Station[]): Station[] {
   const mineIds = new Set(mine.map(station => station.id));
   return [
-    ...known.filter(station => station.source === 'featured'),
+    ...known.filter(station => station.source === 'featured' || station.source === 'favorites'),
     ...mine,
     ...known.filter(station => station.source === 'link' && !mineIds.has(station.id)),
   ];
 }
 
 /** What the stage says while there is nothing to play. */
-function statusText(load: Load, selected: number): string | null {
+function statusText(load: Load, selected: StationId): string | null {
   if (load.id !== selected || load.status === 'loading') return 'Tuning in…';
   if (load.status === 'error') return load.message;
+  if (selected === FAVORITES_ID) return 'Star a track to add it to Favorites.';
   if (!load.playable) {
     if (!load.done) return 'Tuning in…';
     return load.skipped ? 'This collection has no videos, only images.' : 'This collection is empty.';

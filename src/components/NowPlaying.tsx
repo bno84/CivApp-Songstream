@@ -5,6 +5,7 @@ import type { Info } from '../info.js';
 import { formatCount } from '../media.js';
 import { imagePath, profilePath, type Track } from '../track.js';
 import { CivitaiLink } from './CivitaiLink.js';
+import { FavoriteButton } from './FavoriteButton.js';
 import { Icon } from './Icon.js';
 
 const REACTIONS = [
@@ -15,7 +16,13 @@ const REACTIONS = [
 ] as const;
 
 /** Title, creator, reaction counts and the ways out to Civitai, under the video. */
-export function NowPlaying({ track, title, info }: { track: Track | null; title: string; info: Info | undefined }) {
+export function NowPlaying({ track, title, info, starred, toggleFavorite }: {
+  track: Track | null;
+  title: string;
+  info: Info | undefined;
+  starred: boolean;
+  toggleFavorite: ((track: Track) => void) | undefined;
+}) {
   if (!track) return <div className="now-playing" />;
   const creator = track.creator?.username ?? null;
   const creatorPath = profilePath(creator);
@@ -23,7 +30,10 @@ export function NowPlaying({ track, title, info }: { track: Track | null; title:
   return (
     <div className="now-playing">
       <div className="now-title">
-        <h2 className="clamp-2" title={title}>{title}</h2>
+        <div className="now-heading">
+          <h2 className="clamp-2" title={title}>{title}</h2>
+          <FavoriteButton title={title} starred={starred} onToggle={toggleFavorite && (() => toggleFavorite(track))} />
+        </div>
         {creator && (
           <CivitaiLink path={creatorPath ?? imagePath(track.id)} className="creator" title={`${creator} on Civitai`}>
             <Avatar key={info?.status === 'ready' ? info.avatar : null} name={creator}

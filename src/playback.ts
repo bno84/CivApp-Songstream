@@ -6,7 +6,7 @@
 // time, so a page that lands while the viewer presses Next is never lost.
 
 import {
-  advance, appendItems, back, createQueue, current, jump, nextRepeat, setRepeat, setShuffle, type Queue, type Repeat,
+  advance, appendItems, back, createQueue, current, jump, nextRepeat, removeItem, setRepeat, setShuffle, type Queue, type Repeat,
 } from './queue.js';
 import type { Track } from './track.js';
 
@@ -25,6 +25,7 @@ export interface PlaybackState {
 export type PlaybackAction =
   | { type: 'load'; tracks: readonly Track[] }
   | { type: 'append'; tracks: readonly Track[] }
+  | { type: 'remove'; id: number }
   | { type: 'play' }
   | { type: 'pause' }
   | { type: 'next' }
@@ -71,6 +72,19 @@ export function playbackReducer(state: PlaybackState, action: PlaybackAction): P
     case 'append': {
       const next = appendItems(queue, action.tracks);
       return next === queue ? state : { ...state, queue: next, stuck: false };
+    }
+    case 'remove': {
+      const next = removeItem(queue, action.id);
+      if (next === queue) return state;
+      const removedCurrent = action.id === currentId(queue);
+      const remainingFailures = new Set(failed);
+      remainingFailures.delete(action.id);
+      // If there is no following track in this order, pause on the previous one.
+      return {
+        ...state, queue: next, failed: remainingFailures,
+        playing: state.playing && (!removedCurrent || queue.pos < next.order.length),
+        stuck: !removedCurrent && state.stuck,
+      };
     }
     case 'play':
       if (!state.stuck) return state.playing ? state : { ...state, playing: true };

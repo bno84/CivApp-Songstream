@@ -35,6 +35,7 @@ export interface Player {
   load: (tracks: readonly Track[]) => void;
   /** Adds tracks that arrived later (the next page of a collection). */
   append: (tracks: readonly Track[]) => void;
+  remove: (id: number) => void;
   play: () => void;
   pause: () => void;
   toggle: () => void;
@@ -188,6 +189,7 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
 
     load: tracks => dispatch({ type: 'load', tracks }),
     append: tracks => dispatch({ type: 'append', tracks }),
+    remove: useCallback((id: number) => dispatch({ type: 'remove', id }), []),
     play,
     pause,
     toggle: () => (playing ? pause() : play()),

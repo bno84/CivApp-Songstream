@@ -55,10 +55,12 @@ frames, and the `allow` list documented.
 
 ### 4. Playlists the app can build
 
-**Today:** apps can follow collections but not create one or add items, so a
-playlist has to be built on Civitai itself.
+**Today:** apps can follow collections but cannot create one or change its
+items. Radio lets viewers star tracks in a private app document store as a
+stop-gap for a Favorites playlist.
 
-**Want:** a consent-gated scope to create a collection and add or remove items.
+**Want:** a consent-gated scope to create a collection and add or remove items,
+so viewers can save and manage Favorites on Civitai itself.
 
 ### 5. Titles and counts on collection items
 

@@ -73,6 +73,17 @@ export function appendItems<T extends { id: number }>(queue: Queue<T>, more: rea
   return { ...queue, items: [...queue.items, ...fresh], order, pos: queue.pos < 0 ? 0 : queue.pos };
 }
 
+/** Removes a track while keeping the remaining play order and history. */
+export function removeItem<T extends { id: number }>(queue: Queue<T>, id: number): Queue<T> {
+  const index = queue.items.findIndex(item => item.id === id);
+  if (index < 0) return queue;
+  const at = queue.order.indexOf(index);
+  const items = queue.items.filter((_, i) => i !== index);
+  const order = queue.order.filter(i => i !== index).map(i => i > index ? i - 1 : i);
+  const pos = at < queue.pos ? queue.pos - 1 : queue.pos;
+  return { ...queue, items, order, pos: Math.min(pos, order.length - 1) };
+}
+
 export function current<T extends { id: number }>(queue: Queue<T>): T | null {
   return queue.pos < 0 ? null : queue.items[queue.order[queue.pos]] ?? null;
 }

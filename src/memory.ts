@@ -11,10 +11,14 @@
 import type { DocumentStorage } from '@civitai/sdk';
 
 import type { Repeat } from './queue.js';
+import { asTrack, type Track } from './track.js';
+
+export const FAVORITES_ID = 'favorites';
+export type StationId = number | typeof FAVORITES_ID;
 
 export interface Prefs {
   /** The playlist that was playing; `null` for the featured one. */
-  station: number | null;
+  station: StationId | null;
   volume: number;
   muted: boolean;
   shuffle: boolean;
@@ -39,6 +43,10 @@ export interface Memory {
   /** Puts a collection at the front of the recent list, or renames it there. */
   remember: (station: RecentStation) => Promise<void>;
   forget: (id: number) => Promise<void>;
+  /** Starred tracks, newest first. */
+  favorites: () => Promise<Track[]>;
+  /** Returns whether the change was saved beyond this visit. */
+  setFavorite: (track: Track, starred: boolean) => Promise<boolean>;
 }
 
 export const DEFAULT_PREFS: Prefs = { station: null, volume: 1, muted: false, shuffle: true, repeat: 'all' };
@@ -57,7 +65,9 @@ export function asPrefs(data: unknown): Prefs {
   const value = (data && typeof data === 'object' ? data : {}) as Partial<Record<keyof Prefs, unknown>>;
   const volume = typeof value.volume === 'number' && value.volume >= 0 && value.volume <= 1 ? value.volume : DEFAULT_PREFS.volume;
   return {
-    station: Number.isSafeInteger(value.station) && (value.station as number) > 0 ? value.station as number : null,
+    station: value.station === FAVORITES_ID ||
+      (typeof value.station === 'number' && Number.isSafeInteger(value.station) && value.station > 0)
+      ? value.station : null,
     volume,
     muted: typeof value.muted === 'boolean' ? value.muted : DEFAULT_PREFS.muted,
     shuffle: typeof value.shuffle === 'boolean' ? value.shuffle : DEFAULT_PREFS.shuffle,
@@ -93,6 +103,7 @@ export function createMemory(storage: DocumentStorage | Promise<DocumentStorage 
   }).then(client => client && {
     prefs: client.collection<Prefs>('prefs'),
     recent: client.collection<RecentStation>('recent_collections'),
+    favorites: client.collection<Track>('favorites'),
   });
 
   // Settings: loaded once, then this visit's changes win.
@@ -147,6 +158,29 @@ export function createMemory(storage: DocumentStorage | Promise<DocumentStorage 
     }
   }
 
+  // One document per track, so a write in one tab cannot overwrite unrelated stars.
+  const favorites = new Map<number, Track>();
+  const favoriteWrites = new Map<number, Promise<boolean>>();
+  let favoritesLoad: Promise<void> | null = null;
+
+  async function loadFavorites() {
+    const store = (await stores)?.favorites;
+    if (!store) return;
+    let cursor: string | undefined;
+    try {
+      do {
+        const page = await store.list({ sort: 'createdAt', cursor });
+        for (const doc of page.items) {
+          const track = asTrack(doc.data);
+          if (track && doc.key === `t-${track.id}`) favorites.set(track.id, track);
+        }
+        cursor = page.nextCursor ?? undefined;
+      } while (cursor);
+    } catch (error) {
+      warn('read favorites', error);
+    }
+  }
+
   return {
     prefs: async () => {
       await (prefsLoad ??= loadPrefs());
@@ -198,6 +232,39 @@ export function createMemory(storage: DocumentStorage | Promise<DocumentStorage 
         } catch (error) {
           warn('forget the collection', error);
         }
+      });
+    },
+
+    favorites: async () => {
+      await (favoritesLoad ??= loadFavorites());
+      return [...favorites.values()].reverse();
+    },
+
+    setFavorite: (track, starred) => {
+      const updated = (favoritesLoad ??= loadFavorites()).then(() => {
+        if (starred) {
+          favorites.delete(track.id);
+          favorites.set(track.id, track);
+        } else {
+          favorites.delete(track.id);
+        }
+      });
+      const write = Promise.all([updated, favoriteWrites.get(track.id)]).then(async () => {
+        const store = (await stores)?.favorites;
+        if (!store) return false;
+        try {
+          const key = `t-${track.id}`;
+          if (starred) await store.put(key, track);
+          else await store.delete(key);
+          return true;
+        } catch (error) {
+          warn('save favorites', error);
+          return false;
+        }
+      });
+      favoriteWrites.set(track.id, write);
+      return write.finally(() => {
+        if (favoriteWrites.get(track.id) === write) favoriteWrites.delete(track.id);
       });
     },
   };

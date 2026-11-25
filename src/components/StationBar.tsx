@@ -2,15 +2,12 @@
 import { useState, type FormEvent } from 'react';
 
 import { parseCollectionRef } from '../api.js';
+import type { FAVORITES_ID, StationId } from '../memory.js';
 import { Icon } from './Icon.js';
 import { SourceNote } from './SourceNote.js';
 
-export interface Station {
-  id: number;
-  name: string;
-  /** The default station (starred), one of the viewer's own collections, or one opened by link. */
-  source: 'featured' | 'mine' | 'link';
-}
+export type Station = { id: number; name: string; source: 'featured' | 'mine' | 'link' }
+  | { id: typeof FAVORITES_ID; name: string; source: 'favorites' };
 
 /** The playlists across the top: the featured one, the viewer's collections, and any opened by link. */
 export function StationBar({ stations, selected, onSelect, onOpen, onForget, status }: {
@@ -19,8 +16,8 @@ export function StationBar({ stations, selected, onSelect, onOpen, onForget, sta
   onForget: (id: number) => void;
   /** Loading or failing to load the selected playlist, when the stage cannot say so. */
   status: { text: string; error: boolean } | null;
-  selected: number;
-  onSelect: (id: number) => void;
+  selected: StationId;
+  onSelect: (id: StationId) => void;
   /** Adds a collection by id and plays it. */
   onOpen: (id: number) => void;
 }) {
@@ -49,7 +46,7 @@ export function StationBar({ stations, selected, onSelect, onOpen, onForget, sta
           const chip = (
             <button key={station.id} type="button" className={`chip${station.id === selected ? ' on' : ''}`}
               aria-pressed={station.id === selected} onClick={() => onSelect(station.id)}>
-              {station.source === 'featured' && <span aria-hidden="true">★ </span>}
+              {station.source === 'favorites' && <span aria-hidden="true">★ </span>}
               {station.name}
             </button>
           );

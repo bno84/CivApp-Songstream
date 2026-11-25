@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { createFakeStorage } from '@civitai/sdk/testing';
 
 import manifest from '../block.manifest.json';
-import { DEFAULT_PREFS, RECENT_LIMIT, asPrefs, createMemory } from './memory.js';
+import { DEFAULT_PREFS, FAVORITES_ID, RECENT_LIMIT, asPrefs, createMemory } from './memory.js';
+import type { Track } from './track.js';
+
+const track = (id: number): Track => ({
+  id, type: 'video', url: `https://image.civitai.com/sample/${id}/original=true/video.mp4`,
+  still: null, creator: null, nsfwLevel: 1,
+});
 
 /** Several visits by one viewer: one memory per visit, over the same store. */
 function visits() {
@@ -52,6 +58,44 @@ describe('createMemory', () => {
     await first.forget(7);
     expect(await first.recent()).toEqual([]);
     expect(await visit().recent()).toEqual([]);
+  });
+
+  it('restores Favorites, including saved tracks on later pages, in newest-first order', async () => {
+    const visit = visits();
+    const first = visit();
+    for (let id = 1; id <= 51; id++) expect(await first.setFavorite(track(id), true)).toBe(true);
+    first.savePrefs({ station: FAVORITES_ID });
+    await first.flush();
+
+    const next = visit();
+    expect((await next.prefs()).station).toBe(FAVORITES_ID);
+    expect((await next.favorites()).map(({ id }) => id)).toEqual(Array.from({ length: 51 }, (_, i) => 51 - i));
+  });
+
+  it('keeps the last star change when a viewer toggles a track quickly', async () => {
+    const visit = visits();
+    const first = visit();
+    expect(await Promise.all([
+      first.setFavorite(track(1), true),
+      first.setFavorite(track(1), false),
+      first.setFavorite(track(2), true),
+    ])).toEqual([true, true, true]);
+    expect((await first.favorites()).map(({ id }) => id)).toEqual([2]);
+    expect((await visit().favorites()).map(({ id }) => id)).toEqual([2]);
+  });
+
+  it('ignores stored favorites with untrusted media URLs', async () => {
+    const visit = visits();
+    await visit().setFavorite({ ...track(1), url: 'https://example.org/video.mp4' }, true);
+    expect(await visit().favorites()).toEqual([]);
+  });
+
+  it('keeps stars for the visit when they cannot be saved', async () => {
+    const memory = createMemory(null);
+    expect(await memory.setFavorite(track(1), true)).toBe(false);
+    expect(await memory.favorites()).toEqual([track(1)]);
+    expect(await memory.setFavorite(track(1), false)).toBe(false);
+    expect(await memory.favorites()).toEqual([]);
   });
 
   it('works for the visit when the store refuses', async () => {

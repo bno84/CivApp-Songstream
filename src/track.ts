@@ -14,6 +14,20 @@ export interface Track {
   nsfwLevel: number;
 }
 
+/** A saved favorite, checked before its media is used again. */
+export function asTrack(data: unknown): Track | null {
+  if (!data || typeof data !== 'object') return null;
+  const { id, type, url, creator, nsfwLevel } = data as Partial<Track>;
+  if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0 ||
+    (type !== 'video' && type !== 'audio') || typeof url !== 'string' || !isTrustedMedia(url) ||
+    typeof nsfwLevel !== 'number' || !Number.isSafeInteger(nsfwLevel) || nsfwLevel < 0) return null;
+  const owner = creator && Number.isSafeInteger(creator.userId) && creator.userId > 0 &&
+    (creator.username === null || typeof creator.username === 'string')
+    ? { userId: creator.userId, username: creator.username }
+    : null;
+  return { id, type, url, creator: owner, nsfwLevel, still: stillUrl(url, type, 450) };
+}
+
 /**
  * The playable items of a collection page. Images, items without a file, and
  * files anywhere but on Civitai are skipped.
