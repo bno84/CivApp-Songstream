@@ -13,6 +13,7 @@ const fill = (value: number, max: number): CSSProperties =>
 
 export function Controls({ player }: { player: Player }) {
   const { queue, playing, time, duration, volume, muted, track } = player;
+  const shuffle = (player.pending ?? queue).shuffle;
   const known = duration != null;
   const shownVolume = muted ? 0 : volume;
   return (
@@ -30,8 +31,8 @@ export function Controls({ player }: { player: Player }) {
           <kbd title="Seek; with Shift, previous or next">← →</kbd>
         </div>
         <div className="transport">
-          <button type="button" className={`icon-button${queue.shuffle ? ' on' : ''}`} onClick={player.toggleShuffle}
-            aria-pressed={queue.shuffle} title={queue.shuffle ? 'Shuffle on' : 'Shuffle off'} aria-label="Shuffle">
+          <button type="button" className={`icon-button${shuffle ? ' on' : ''}`} onClick={player.toggleShuffle}
+            aria-pressed={shuffle} title={shuffle ? 'Shuffle on' : 'Shuffle off'} aria-label="Shuffle">
             <Icon name="shuffle" />
           </button>
           <button type="button" className="icon-button" onClick={player.previous} disabled={!track}

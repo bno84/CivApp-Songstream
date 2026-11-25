@@ -85,21 +85,23 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   const favoriteIds = useMemo(() => new Set(favorites?.map(track => track.id)), [favorites]);
   const favoritesReady = favorites !== null;
 
-  const { remove } = player;
+  const { append, remove } = player;
   const favoritesActive = selected === FAVORITES_ID && load.status === 'ready';
   const toggleFavorite = useCallback((track: Track) => {
     if (!favoritesReady) return;
     const starred = !favoriteIds.has(track.id);
     setFavorites(tracks => starred ? [track, ...(tracks ?? [])] : tracks?.filter(item => item.id !== track.id) ?? []);
-    if (!starred && favoritesActive) remove(track.id);
+    if (favoritesActive) {
+      if (starred) append([track]);
+      else remove(track.id);
+    }
     void memory.setFavorite(track, starred).then(saved => {
       if (!saved) setFavoritesUnsaved(true);
     });
-  }, [favoriteIds, favoritesReady, favoritesActive, memory, remove]);
+  }, [favoriteIds, favoritesReady, favoritesActive, memory, append, remove]);
 
   const tuneToFavorites = (tracks: Track[]) => {
-    player.load(tracks);
-    if (!tracks.length) player.pause();
+    player.load(FAVORITES_ID, tracks, true);
     setLoad({ id: FAVORITES_ID, status: 'ready', playable: tracks.length, skipped: 0, done: true });
   };
 
@@ -134,11 +136,11 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
     const tracks = toTracks(page.items);
     const skipped = page.items.length - tracks.length;
     if (first) {
-      player.load(tracks);
-    } else if (player.queue.shuffle) {
+      player.load(id, tracks);
+    } else if ((player.pending ?? player.queue).shuffle) {
       held.push(...tracks);
       // Running out before the rest is read: shuffle in what is here now.
-      const { queue: q } = player;
+      const q = player.pending ?? player.queue;
       if (q.order.length - q.pos - 1 < LOW_WATER) player.append(held.splice(0));
     } else {
       // In collection order: pages held while shuffle was on go first.
@@ -222,6 +224,7 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   const select = (id: StationId) => {
     if (id === selected) return;
     collectionReadRef.current?.abort();
+    player.cancelPending();
     setSelected(id);
     if (id === FAVORITES_ID && favorites) tuneToFavorites(favorites);
     else setLoad({ id, status: 'loading' });
@@ -248,9 +251,10 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   // Details for the current track, and the next one so its title is ready.
   const { track } = player;
   const upcoming = useMemo(() => {
+    if (player.pending) return current(player.pending);
     const following = advance(queue);
     return following ? current(following) : null;
-  }, [queue]);
+  }, [queue, player.pending]);
   useEffect(() => {
     if (track) infos.load(track);
     if (upcoming) infos.load(upcoming);
@@ -259,13 +263,14 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   const info = track ? infos.get(track.id) : undefined;
   const title = track ? trackTitle(track, info?.status === 'ready' ? info.title : null) : 'Civitai Radio';
   const station = stations.find(entry => entry.id === selected);
-  useMediaSession(player, { title, album: station?.name ?? null });
+  const playingStation = stations.find(entry => entry.id === player.station);
+  useMediaSession(player, { title, album: playingStation?.name ?? null });
   useKeyboard(player);
 
   return (
     <div className="radio">
       <StationBar stations={stations} selected={selected} onSelect={select} onOpen={openById} onForget={forget}
-        status={barStatus(load, station?.name ?? 'this playlist', Boolean(track)) ??
+        status={barStatus(load, station?.name ?? 'this playlist', Boolean(track), player.pending !== null) ??
           (favoritesUnsaved ? { text: 'Some Favorites changes could only be kept for this visit.', error: true } : null)} />
       <div className="radio-main">
         <div className="player-column">
@@ -311,10 +316,11 @@ function statusText(load: Load, selected: StationId): string | null {
  * The top bar's note, only while it matters: tuning in to another playlist, or
  * why it failed, while the stage still shows what was playing before.
  */
-function barStatus(load: Load, name: string, playing: boolean): { text: string; error: boolean } | null {
-  if (!playing) return null;
+function barStatus(load: Load, name: string, hasTrack: boolean, pending: boolean): { text: string; error: boolean } | null {
+  if (!hasTrack) return null;
   if (load.status === 'loading') return { text: `Tuning in to ${name}…`, error: false };
   if (load.status === 'error') return { text: `${name}: ${load.message}`, error: true };
+  if (pending) return { text: `${name} plays next.`, error: false };
   if (load.status === 'ready' && load.capped) {
     return { text: `${name} is long: playing its first ${(MAX_PAGES * PAGE_SIZE).toLocaleString('en')} items.`, error: false };
   }
