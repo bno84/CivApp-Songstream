@@ -5,6 +5,7 @@
 // the queue rows can show titles as they arrive. React-free.
 
 import type { ApiClient, ImageInfo, ImageStats } from './api.js';
+import { avatarUrl } from './media.js';
 import type { Track } from './track.js';
 
 export interface Resource {
@@ -27,7 +28,15 @@ export type Info =
   | { status: 'loading' }
   | { status: 'missing' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; title: string | null; postId: number | null; stats: ImageStats; generation: Generation | null };
+  | {
+    status: 'ready';
+    title: string | null;
+    postId: number | null;
+    stats: ImageStats;
+    generation: Generation | null;
+    /** The creator's avatar, filled in last: it must never hold up the rest. */
+    avatar: string | null;
+  };
 
 export interface InfoStore {
   /** What is known about a track, or `undefined` before anything was asked. */
@@ -83,6 +92,8 @@ const capitalise = (value: string) => value.charAt(0).toUpperCase() + value.slic
 
 export function createInfoStore(api: ApiClient): InfoStore {
   const entries = new Map<number, Info>();
+  // Avatars by creator id: one request per creator for the visit.
+  const avatars = new Map<number, Promise<string | null>>();
   const listeners = new Set<() => void>();
   let version = 0;
 
@@ -100,6 +111,21 @@ export function createInfoStore(api: ApiClient): InfoStore {
     const name = model && version?.name ? `${model} · ${version.name}` : model ?? ref.name ?? `Version ${ref.versionId}`;
     const path = version?.modelId ? `/models/${version.modelId}?modelVersionId=${ref.versionId}` : null;
     return { ...base, name, path };
+  }
+
+  function avatarFor(track: Track): Promise<string | null> {
+    const userId = track.creator?.userId;
+    if (userId == null) return Promise.resolve(null);
+    let found = avatars.get(userId);
+    if (!found) {
+      found = api.getUser(userId).then(user => {
+        // An avatar rated above what the viewer is seeing in this item stays hidden.
+        if (!user || (user.avatarNsfw ?? 1) > Math.max(1, track.nsfwLevel)) return null;
+        return avatarUrl(user.avatarUrl, track.url, 64);
+      }).catch(() => null);
+      avatars.set(userId, found);
+    }
+    return found;
   }
 
   async function fetchInfo(track: Track) {
@@ -124,7 +150,11 @@ export function createInfoStore(api: ApiClient): InfoStore {
         postId: image.postId ?? null,
         stats: image.stats ?? {},
         generation,
+        avatar: null,
       });
+      const avatar = await avatarFor(track);
+      const latest = entries.get(track.id);
+      if (avatar && latest?.status === 'ready') set(track.id, { ...latest, avatar });
     } catch (error) {
       set(track.id, { status: 'error', message: error instanceof Error ? error.message : 'Could not load the details.' });
     }

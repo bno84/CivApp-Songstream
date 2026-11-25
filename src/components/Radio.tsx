@@ -6,7 +6,7 @@ import { useKeyboard, useMediaSession } from '../controls.js';
 import { createInfoStore } from '../info.js';
 import { usePlayer } from '../player.js';
 import { advance, current } from '../queue.js';
-import { toTracks, trackTitle } from '../track.js';
+import { toTracks, trackTitle, type Track } from '../track.js';
 import { Controls } from './Controls.js';
 import { NowPlaying } from './NowPlaying.js';
 import { Panel } from './Panel.js';
@@ -42,10 +42,14 @@ export function Radio({ api }: { api: ApiClient }) {
     return () => controller.abort();
   }, [api]);
 
-  const onPage = useEffectEvent((id: number, page: CollectionPage, first: boolean) => {
+  // Later pages join the queue as they land, at the end. Shuffled, they wait
+  // and are shuffled in once the whole collection is read, so the list does not
+  // reshuffle under the viewer with every page.
+  const onPage = useEffectEvent((id: number, page: CollectionPage, first: boolean, held: Track[]) => {
     const tracks = toTracks(page.items);
     const skipped = page.items.length - tracks.length;
     if (first) player.load(tracks);
+    else if (player.queue.shuffle) held.push(...tracks);
     else player.append(tracks);
     setStations(known => known.map(station =>
       station.id === id && page.collection?.name ? { ...station, name: page.collection.name } : station));
@@ -56,20 +60,26 @@ export function Radio({ api }: { api: ApiClient }) {
     }));
   });
 
+  const appendHeld = useEffectEvent((held: Track[]) => player.append(held));
+
   // Read the selected collection page by page; playback starts with the first.
   useEffect(() => {
     const controller = new AbortController();
     let first = true;
+    const held: Track[] = [];
     readCollection(api, selected, {
       signal: controller.signal,
       onPage: page => {
-        onPage(selected, page, first);
+        onPage(selected, page, first, held);
         first = false;
       },
     }).then(() => {
+      if (held.length) appendHeld(held);
       setLoad(state => (state.id === selected && state.status === 'ready' ? { ...state, done: true } : state));
     }).catch((error: unknown) => {
       if (controller.signal.aborted) return;
+      // What was read before the failure still plays.
+      if (held.length) appendHeld(held);
       setLoad({ id: selected, status: 'error', message: error instanceof Error ? error.message : 'Could not load this playlist.' });
     });
     return () => controller.abort();

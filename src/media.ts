@@ -41,6 +41,26 @@ export function stillUrl(url: string | null, type: MediaType, width = 320): stri
   return transform(url, `width=${width}`) ?? url;
 }
 
+/**
+ * A creator's avatar at `size` px. The users route gives a CDN key; the CDN's
+ * namespace is taken from a media URL that came from the same CDN. Old
+ * accounts may carry a full URL instead.
+ */
+export function avatarUrl(key: string | null | undefined, cdnSample: string | null, size = 64): string | null {
+  if (!key) return null;
+  if (/^https:\/\//.test(key)) return key;
+  if (!/^[\w-]+$/.test(key) || !cdnSample) return null;
+  let sample: URL;
+  try {
+    sample = new URL(cdnSample);
+  } catch {
+    return null;
+  }
+  const namespace = sample.pathname.split('/')[1];
+  if (!CDN_HOST.test(sample.hostname) || !namespace) return null;
+  return `${sample.origin}/${namespace}/${key}/width=${size}/avatar.jpeg`;
+}
+
 /** 3:41, or 1:02:03 past an hour. Unknown or broken values read as `–:––`. */
 export function formatTime(seconds: number | null | undefined): string {
   if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return '–:––';

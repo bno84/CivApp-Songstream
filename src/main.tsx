@@ -6,6 +6,7 @@ import { useBlockToken, useHostOrigin } from '@civitai/blocks-react';
 
 import { App } from './App.js';
 import { createHttpClient } from './api.js';
+import { fitToVisibleHeight } from './viewport.js';
 import './index.css';
 
 // No injectBlocksStyles(): Civitai Radio has its own look rather than the
@@ -38,6 +39,8 @@ async function mount(): Promise<ReactNode> {
   }
   return <LiveApp />;
 }
+
+fitToVisibleHeight();
 
 const container = document.getElementById('root');
 if (!container) throw new Error('#root missing from index.html');

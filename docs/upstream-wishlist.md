@@ -70,7 +70,17 @@ needs a click before it can play, and its media keys are best effort.
 **Want:** the iframe's `allow` list documented, with `autoplay`,
 `fullscreen` and `picture-in-picture` delegated if possible.
 
-### 7. Reactions on video
+### 7. A page app frame that fits the screen
+
+**Today:** on civitai.com the page app's frame runs on below the fold, under
+Civitai's header, so a full-height app scrolls the page and hides its own
+controls. The host ignores resize requests from page apps and passes no visible
+height. The app measures the visible part itself with an IntersectionObserver.
+
+**Want:** the frame sized to the visible content area, or that height passed to
+the app (in `BLOCK_INIT` and on change).
+
+### 8. Reactions on video
 
 **Today:** `useReactions` documents `entityType: 'image'` only, and needs a
 `reactTicket` that no hook supplies yet.

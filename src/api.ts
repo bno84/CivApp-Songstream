@@ -18,6 +18,7 @@
 //   GET /api/v1/images?imageId=…&withMeta=true  stats and generation data
 //   GET /api/v1/posts/{id}                      the post's title
 //   GET /api/v1/model-versions/{id}             a resource's model and version name
+//   GET /api/v1/users?ids=…                     a creator's avatar (a CDN key)
 //
 // The images route filters by browsing level, so it is asked for the item's own
 // level: one the viewer already sees, since the collection route served it.
@@ -100,6 +101,15 @@ export interface ModelVersionInfo {
   model?: { name?: string | null; type?: string | null } | null;
 }
 
+export interface UserInfo {
+  id: number;
+  username?: string | null;
+  /** An image key on Civitai's CDN, or (for old accounts) a full URL. */
+  avatarUrl?: string | null;
+  /** The avatar's browsing level; 1 is safe for everyone. */
+  avatarNsfw?: number | null;
+}
+
 export interface ApiClient {
   listMine(cursor?: string): Promise<CollectionList>;
   getPage(id: number, cursor?: string, signal?: AbortSignal): Promise<CollectionPage>;
@@ -107,6 +117,7 @@ export interface ApiClient {
   getImage(id: number, nsfwLevel: number, signal?: AbortSignal): Promise<ImageInfo | null>;
   getPost(id: number, signal?: AbortSignal): Promise<PostInfo | null>;
   getModelVersion(id: number, signal?: AbortSignal): Promise<ModelVersionInfo | null>;
+  getUser(id: number, signal?: AbortSignal): Promise<UserInfo | null>;
 }
 
 export class ApiError extends Error {
@@ -204,6 +215,10 @@ export function createHttpClient({ origin, getToken, refreshToken }: HttpOptions
     },
     getPost: (id, signal) => lookup<PostInfo>(`/api/v1/posts/${id}`, {}, signal),
     getModelVersion: (id, signal) => lookup<ModelVersionInfo>(`/api/v1/model-versions/${id}`, {}, signal),
+    getUser: async (id, signal) => {
+      const page = await lookup<{ items?: UserInfo[] }>('/api/v1/users', { ids: id }, signal);
+      return page?.items?.find(item => item.id === id) ?? null;
+    },
   };
 }
 

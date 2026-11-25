@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { useState } from 'react';
+
 import type { Info } from '../info.js';
 import { formatCount } from '../media.js';
 import { useOpen } from '../open.js';
@@ -26,7 +28,8 @@ export function NowPlaying({ track, title, info }: { track: Track | null; title:
         {creator && (
           <button type="button" className="creator" onClick={() => creatorPath && open(creatorPath)}
             title={`${creator} on Civitai`}>
-            <span className="avatar" aria-hidden="true">{creator.charAt(0).toUpperCase()}</span>
+            <Avatar key={info?.status === 'ready' ? info.avatar : null} name={creator}
+              src={info?.status === 'ready' ? info.avatar : null} />
             {creator}
           </button>
         )}
@@ -49,5 +52,21 @@ export function NowPlaying({ track, title, info }: { track: Track | null; title:
         </button>
       </div>
     </div>
+  );
+}
+
+/**
+ * The creator's initial, covered by their avatar once it loads. Low priority:
+ * the video comes first.
+ */
+function Avatar({ name, src }: { name: string; src: string | null }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <span className="avatar" aria-hidden="true">
+      {name.charAt(0).toUpperCase()}
+      {src && !failed && (
+        <img src={src} alt="" loading="lazy" decoding="async" fetchPriority="low" onError={() => setFailed(true)} />
+      )}
+    </span>
   );
 }

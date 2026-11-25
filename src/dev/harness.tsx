@@ -100,6 +100,11 @@ const fakeApi: ApiClient = {
     const imageId = id - 1_000_000;
     return imageId % 7 === 2 ? { id, title: null } : { id, title: TITLES[imageId % TITLES.length] };
   },
+  async getUser(id) {
+    await delay(400);
+    // The sample media sit off Civitai's CDN, so there is no avatar to build.
+    return { id, avatarUrl: null, avatarNsfw: 1 };
+  },
   async getModelVersion(id) {
     await delay(150);
     return id === 9001

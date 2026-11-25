@@ -60,6 +60,30 @@ describe('createInfoStore', () => {
     ]);
   });
 
+  it('adds the creator\'s avatar last, once per creator, unless it is rated above the item', async () => {
+    const cdn = 'https://image.civitai.com/ns/abc/original=true/1.mp4';
+    let userCalls = 0;
+    const api = {
+      getImage: async (id: number) => ({ id, postId: null, stats: {}, meta: null }),
+      getUser: async (id: number) => {
+        userCalls++;
+        return { id, avatarUrl: id === 1 ? 'face' : 'spicy', avatarNsfw: id === 1 ? 1 : 8 };
+      },
+    } as unknown as ApiClient;
+    const store = createInfoStore(api);
+    const withAvatar = async (id: number, userId: number) => {
+      store.load({ ...track, id, url: cdn, creator: { userId, username: 'u' } });
+      await settled(store, id);
+      await new Promise(resolve => setTimeout(resolve, 0));
+      const info = store.get(id);
+      return info?.status === 'ready' ? info.avatar : undefined;
+    };
+    expect(await withAvatar(1, 1)).toBe('https://image.civitai.com/ns/face/width=64/avatar.jpeg');
+    expect(await withAvatar(2, 1)).toBe('https://image.civitai.com/ns/face/width=64/avatar.jpeg');
+    expect(await withAvatar(3, 2)).toBeNull();
+    expect(userCalls).toBe(2);
+  });
+
   it('marks an image Civitai does not list as missing', async () => {
     const store = createInfoStore({ getImage: async () => null } as unknown as ApiClient);
     store.load(track);

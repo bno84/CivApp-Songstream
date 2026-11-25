@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 
-import { formatCount, formatTime, stillUrl } from './media.js';
+import { avatarUrl, formatCount, formatTime, stillUrl } from './media.js';
 
 const CDN = 'https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/0b1c2d3e-uuid/original=true/123456.mp4';
 
@@ -42,4 +42,19 @@ it('formatCount shortens large counts', () => {
   expect(formatCount(1234)).toBe('1.2k');
   expect(formatCount(214000)).toBe('214k');
   expect(formatCount(3_400_000)).toBe('3.4M');
+});
+
+describe('avatarUrl', () => {
+  it('builds a CDN link from a key, in the namespace of a known media URL', () => {
+    expect(avatarUrl('6046154e-6d32-4500-8772-602edb4a4600', CDN, 64)).toBe(
+      'https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/6046154e-6d32-4500-8772-602edb4a4600/width=64/avatar.jpeg');
+  });
+
+  it('keeps a full URL and refuses what it cannot place', () => {
+    expect(avatarUrl('https://example.com/me.png', null)).toBe('https://example.com/me.png');
+    expect(avatarUrl('abc', null)).toBeNull();
+    expect(avatarUrl('abc', 'https://example.com/a/b.mp4')).toBeNull();
+    expect(avatarUrl('../x', CDN)).toBeNull();
+    expect(avatarUrl(null, CDN)).toBeNull();
+  });
 });
