@@ -22,7 +22,7 @@ export function NowPlaying({ track, title, info }: { track: Track | null; title:
   return (
     <div className="now-playing">
       <div className="now-title">
-        <h2 className="ellipsis" title={title}>{title}</h2>
+        <h2 className="clamp-2" title={title}>{title}</h2>
         {creator && (
           <button type="button" className="creator" onClick={() => creatorPath && open(creatorPath)}
             title={`${creator} on Civitai`}>

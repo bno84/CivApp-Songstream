@@ -59,8 +59,10 @@ function QueueList({ player, infos }: { player: Player; infos: InfoStore }) {
         const known = info?.status === 'ready' ? info.title : null;
         const title = trackTitle(item, known);
         const creator = item.creator?.username ?? 'Unknown creator';
-        // Untitled rows lead with the creator, so the list stays scannable.
-        const [main, sub] = known ? [known, creator] : [creator, title];
+        // Untitled rows lead with the creator, so the list stays scannable. A
+        // row whose details have not loaded is not called untitled yet.
+        const kind = item.type === 'audio' ? 'Track' : 'Video';
+        const [main, sub] = known ? [known, creator] : [creator, info?.status === 'ready' ? title : kind];
         const duration = durations.get(item.id);
         return (
           <li key={item.id} className={`queue-row ${state}`} aria-current={state === 'current'}>

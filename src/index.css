@@ -267,13 +267,15 @@ button:disabled {
 
 .now-playing {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  gap: 8px 16px;
   min-height: 58px;
 }
 
 .now-title {
-  flex: 1;
+  /* Below 280px for the title, the reactions wrap onto their own line. */
+  flex: 1 1 280px;
   min-width: 0;
 }
 
@@ -281,6 +283,15 @@ button:disabled {
   margin: 0 0 4px;
   font-size: 21px;
   line-height: 1.25;
+}
+
+/* Up to two lines, then an ellipsis. A title with no spaces breaks anywhere. */
+.clamp-2 {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .creator {
@@ -751,10 +762,6 @@ kbd {
 @container app (max-width: 1024px) {
   .radio-main {
     grid-template-columns: minmax(0, 1fr) 320px;
-  }
-
-  .now-playing {
-    flex-wrap: wrap;
   }
 
   .keys {

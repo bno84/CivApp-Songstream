@@ -20,7 +20,11 @@ const CLIPS = [
 
 const CREATORS = ['driftcat', 'tidewright', 'hushmoth', 'fernhollow', 'saltglass', 'emberloom', 'oakandash', 'lunaforge'];
 const TITLES = ['Neon Rain on Mars', 'Lo-fi lighthouse', 'Paper moons', 'Static garden', 'Glass harbour', 'Ember waltz',
-  'Moth radio', 'Copper skies', 'Tidal hymn', 'Pixel dusk', 'Quiet circuit', 'Juniper byte'];
+  'Moth radio', 'Copper skies', 'Tidal hymn', 'Pixel dusk', 'Quiet circuit', 'Juniper byte',
+  // Titles that test the layout: a pasted prompt, no break opportunities, emoji only.
+  'An extremely long post title that keeps going well past the width of the column, because some creators paste their whole prompt into the title field',
+  'ThisTitleHasNoSpacesAtAllAndJustKeepsGoingWithoutAnyBreakOpportunity_v2_final_FINAL',
+  '🎸🎶✨ 🔥🔥🔥'];
 
 function sample(count: number, seed: number, imageShare = 0): MediaItem[] {
   return Array.from({ length: count }, (_, i) => {
@@ -29,7 +33,8 @@ function sample(count: number, seed: number, imageShare = 0): MediaItem[] {
     return {
       mediaId: id, type: image ? 'image' : 'video', url: image ? null : CLIPS[i % CLIPS.length],
       width: 1280, height: 720, nsfwLevel: 1,
-      creator: { userId: 500 + (i % CREATORS.length), username: CREATORS[(i + seed) % CREATORS.length] },
+      // Every 11th item has no creator, as a deleted account would.
+      creator: i % 11 === 10 ? null : { userId: 500 + (i % CREATORS.length), username: CREATORS[(i + seed) % CREATORS.length] },
     };
   });
 }
@@ -93,7 +98,7 @@ const fakeApi: ApiClient = {
   async getPost(id) {
     await delay(150);
     const imageId = id - 1_000_000;
-    return imageId % 5 === 2 ? { id, title: null } : { id, title: TITLES[imageId % TITLES.length] };
+    return imageId % 7 === 2 ? { id, title: null } : { id, title: TITLES[imageId % TITLES.length] };
   },
   async getModelVersion(id) {
     await delay(150);
@@ -103,9 +108,13 @@ const fakeApi: ApiClient = {
   },
 };
 
+// The harness pads its page by 56px for its message log, which scrolls a
+// full-height app; the real host has no log. `?log` brings it back.
+const showLog = new URLSearchParams(window.location.search).has('log');
+
 export function HarnessApp() {
   return (
-    <Harness>
+    <Harness showLog={showLog}>
       <App api={fakeApi} />
     </Harness>
   );
