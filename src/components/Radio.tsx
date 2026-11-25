@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
 import {
-  MAX_PAGES, PAGE_SIZE, playableCollections, readCollection, readMyCollections, type ApiClient, type CollectionPage,
+  ApiError, MAX_PAGES, PAGE_SIZE, playableCollections, readCollection, readMyCollections, type ApiClient, type CollectionPage,
 } from '../api.js';
 import { useKeyboard, useMediaSession } from '../controls.js';
 import { createInfoStore } from '../info.js';
@@ -188,7 +188,7 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
       if (controller.signal.aborted) return;
       // What was read before the failure still plays.
       if (held.length) appendHeld(held);
-      setLoad({ id: selected, status: 'error', message: error instanceof Error ? error.message : 'Could not load this playlist.' });
+      setLoad({ id: selected, status: 'error', message: error instanceof ApiError ? error.message : 'Could not load this playlist.' });
     });
     return () => {
       controller.abort();

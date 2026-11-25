@@ -33,6 +33,14 @@ describe('createHttpClient', () => {
     expect(calls).toBe(2);
   });
 
+  it.each([
+    [403, 'Civitai refused access to this content.'],
+    [500, 'Civitai could not complete the request. Try again in a moment.'],
+  ])('uses app-written copy for a collection response with status %i', async (status, message) => {
+    vi.stubGlobal('fetch', vi.fn(async () => json({ error: 'Internal server details' }, status)));
+    await expect(client().getPage(7)).rejects.toMatchObject({ status, message });
+  });
+
   it('looks an image up on the public route at its own level, without the block token', async () => {
     let seen: { url: URL; auth: string | null } | undefined;
     vi.stubGlobal('fetch', vi.fn(async (url: URL, init: RequestInit) => {

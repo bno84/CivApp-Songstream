@@ -199,7 +199,7 @@ export function createHttpClient({ origin, getToken, refreshToken }: HttpOptions
         token = fresh?.raw || getToken();
         continue;
       }
-      const error = await toError(response);
+      const error = toError(response);
       if (error.status !== 429 || tries >= RATE_LIMIT_RETRIES) throw error;
       await sleep(error.retryAfterMs ?? 2000 * (tries + 1), signal);
     }
@@ -247,27 +247,19 @@ export function parseRetryAfter(value: string | null): number | undefined {
   return Number.isFinite(date) ? Math.min(60000, Math.max(0, date - Date.now())) : undefined;
 }
 
-async function toError(response: Response): Promise<ApiError> {
-  let message = '';
-  try {
-    const body = (await response.json()) as { error?: unknown; message?: unknown };
-    const value = body.error ?? body.message;
-    message = typeof value === 'string' ? value : '';
-  } catch {
-    // Classified on status alone.
-  }
+function toError(response: Response): ApiError {
   switch (response.status) {
     case 401:
       return new ApiError(401, 'Your Civitai session expired. Reload the page to sign in again.');
     case 403:
-      return new ApiError(403, message || 'Civitai refused this app access to collections.');
+      return new ApiError(403, 'Civitai refused access to this content.');
     case 404:
       return new ApiError(404, 'That collection does not exist, or it is private. Civitai Radio plays public collections and your own public ones.');
     case 429:
       return new ApiError(429, 'Civitai asked the app to slow down. Try again in a moment.',
         parseRetryAfter(response.headers.get('Retry-After')));
     default:
-      return new ApiError(response.status, message || `Civitai answered with an error (${response.status}).`);
+      return new ApiError(response.status, 'Civitai could not complete the request. Try again in a moment.');
   }
 }
 
