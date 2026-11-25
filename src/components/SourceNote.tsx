@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { version } from '../../block.manifest.json';
 
 const SOURCE_URL = 'https://github.com/bno84/CivApp-CivRadio';
 
@@ -10,7 +11,7 @@ const SOURCE_URL = 'https://github.com/bno84/CivApp-CivRadio';
 export function SourceNote() {
   return (
     <p className="source-note" title={`Free software under AGPL-3.0-or-later. Source: ${SOURCE_URL}`}>
-      AGPL-3.0 · <span className="source-url">{SOURCE_URL.replace('https://', '')}</span>
+      v{version} · AGPL-3.0 · <span className="source-url">{SOURCE_URL.replace('https://', '')}</span>
     </p>
   );
 }
