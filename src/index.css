@@ -295,6 +295,11 @@ button:disabled {
   box-shadow: 0 8px 30px rgb(0 0 0 / 0.45);
 }
 
+.stage-note.stage-note-bottom {
+  position: absolute;
+  bottom: 16px;
+}
+
 .stage-note {
   position: relative;
   margin: 0;
@@ -630,6 +635,14 @@ kbd {
   scrollbar-width: thin;
   /* eslint-disable-next-line css/use-baseline -- progressive, see above */
   scrollbar-color: var(--line) transparent;
+}
+
+.queue-row {
+  /* Offscreen rows skip layout and paint; a long collection stays cheap. */
+  /* eslint-disable-next-line css/use-baseline -- progressive: without it rows simply render */
+  content-visibility: auto;
+   
+  contain-intrinsic-size: auto 48px;
 }
 
 .queue-row button {

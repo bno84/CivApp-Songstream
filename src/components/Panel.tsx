@@ -1,42 +1,78 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useLayoutEffect, useRef, useState } from 'react';
+import { memo, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 
 import type { InfoStore } from '../info.js';
 import { formatTime } from '../media.js';
-import type { Player } from '../player.js';
-import { entries } from '../queue.js';
-import { trackTitle } from '../track.js';
+import { entries, type Queue } from '../queue.js';
+import { trackTitle, type Track } from '../track.js';
 import { Details } from './Details.js';
 
 type Tab = 'queue' | 'details';
+const TABS: Tab[] = ['queue', 'details'];
 
-/** The right-hand panel: the queue (played items darkened) and the current item's details. */
-export function Panel({ player, infos }: { player: Player; infos: InfoStore }) {
+interface PanelProps {
+  queue: Queue<Track>;
+  track: Track | null;
+  durations: ReadonlyMap<number, number>;
+  playing: boolean;
+  jumpTo: (id: number) => void;
+  infos: InfoStore;
+  /** The store's version: the panel shows titles from it, so it renders again when it changes. */
+  infosVersion: number;
+}
+
+/**
+ * The right-hand panel: the queue (played items darkened) and the current
+ * item's details. Memoised: it does not render again on every time update,
+ * which would rebuild thousands of queue rows a few times a second.
+ */
+export const Panel = memo(function Panel({ queue, track, durations, playing, jumpTo, infos }: PanelProps) {
   const [tab, setTab] = useState<Tab>('queue');
-  const { queue } = player;
   const count = queue.order.length;
+
+  // Arrow keys move between the tabs, as a tablist should. Handled here, they
+  // never reach the window's seek shortcuts.
+  const onKeyDown = (event: KeyboardEvent) => {
+    const at = TABS.indexOf(tab);
+    const to = event.key === 'ArrowRight' ? TABS[(at + 1) % TABS.length]
+      : event.key === 'ArrowLeft' ? TABS[(at + TABS.length - 1) % TABS.length]
+        : event.key === 'Home' ? TABS[0]
+          : event.key === 'End' ? TABS[TABS.length - 1] : null;
+    if (!to) return;
+    event.preventDefault();
+    setTab(to);
+    document.getElementById(`tab-${to}`)?.focus();
+  };
+
+  const tabProps = (id: Tab) => ({
+    id: `tab-${id}`,
+    role: 'tab',
+    type: 'button' as const,
+    'aria-selected': tab === id,
+    'aria-controls': `tabpanel-${id}`,
+    tabIndex: tab === id ? 0 : -1,
+    className: tab === id ? 'on' : '',
+    onClick: () => setTab(id),
+  });
+
   return (
     <section className="panel">
-      <div className="tabs" role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'queue'} className={tab === 'queue' ? 'on' : ''}
-          onClick={() => setTab('queue')}>
-          Queue{count ? ` · ${queue.pos + 1} of ${count}` : ''}
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'details'} className={tab === 'details' ? 'on' : ''}
-          onClick={() => setTab('details')}>
-          Details
-        </button>
+      <div className="tabs" role="tablist" aria-label="Queue and details" onKeyDown={onKeyDown}>
+        <button {...tabProps('queue')}>Queue{count ? ` · ${queue.pos + 1} of ${count}` : ''}</button>
+        <button {...tabProps('details')}>Details</button>
       </div>
-      <div className="panel-body" role="tabpanel">
-        {tab === 'queue' ? <QueueList player={player} infos={infos} /> : <Details track={player.track} infos={infos} />}
+      <div className="panel-body" role="tabpanel" id={`tabpanel-${tab}`} aria-labelledby={`tab-${tab}`}>
+        {tab === 'queue'
+          ? <QueueList queue={queue} durations={durations} playing={playing} jumpTo={jumpTo} infos={infos} />
+          : <Details track={track} infos={infos} />}
       </div>
     </section>
   );
-}
+});
 
-function QueueList({ player, infos }: { player: Player; infos: InfoStore }) {
+function QueueList({ queue, durations, playing, jumpTo, infos }:
+  Pick<PanelProps, 'queue' | 'durations' | 'playing' | 'jumpTo' | 'infos'>) {
   const listRef = useRef<HTMLOListElement>(null);
-  const { queue, durations, playing } = player;
   const rows = entries(queue);
 
   // Keep the current item in view, with a played one or two above it. The list
@@ -54,7 +90,7 @@ function QueueList({ player, infos }: { player: Player; infos: InfoStore }) {
   if (!rows.length) return <p className="panel-note">Nothing queued yet.</p>;
   return (
     <ol className="queue" ref={listRef}>
-      {rows.map(({ item, at, state }) => {
+      {rows.map(({ item, state }) => {
         const info = infos.get(item.id);
         const known = info?.status === 'ready' ? info.title : null;
         const title = trackTitle(item, known);
@@ -66,7 +102,7 @@ function QueueList({ player, infos }: { player: Player; infos: InfoStore }) {
         const duration = durations.get(item.id);
         return (
           <li key={item.id} className={`queue-row ${state}`} aria-current={state === 'current'}>
-            <button type="button" onClick={() => player.jumpTo(at)} title={`Play ${title}`}>
+            <button type="button" onClick={() => jumpTo(item.id)} title={`Play ${title}`}>
               <Thumb still={item.still} id={item.id} />
               <span className="queue-text">
                 <span className="ellipsis">{main}</span>

@@ -66,7 +66,7 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   const mediaRef = useRef<HTMLVideoElement>(null);
   const player = usePlayer(mediaRef, start.prefs);
   const infos = useMemo(() => createInfoStore(api), [api]);
-  useSyncExternalStore(infos.subscribe, infos.version);
+  const infosVersion = useSyncExternalStore(infos.subscribe, infos.version);
 
   const [stations, setStations] = useState<Station[]>(() => initialStations(start));
   const [selected, setSelected] = useState(start.prefs.station ?? FEATURED.id);
@@ -212,7 +212,8 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
           <NowPlaying track={track} title={title} info={info} />
           <Controls player={player} />
         </div>
-        <Panel player={player} infos={infos} />
+        <Panel queue={queue} track={track} durations={player.durations} playing={player.playing}
+          jumpTo={player.jumpTo} infos={infos} infosVersion={infosVersion} />
       </div>
     </div>
   );

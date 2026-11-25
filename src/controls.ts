@@ -91,6 +91,8 @@ export function useKeyboard(player: Player) {
     if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
     const target = event.target as HTMLElement | null;
     const typing = target?.closest('input, textarea, select, [contenteditable="true"]');
+    // A tablist handles its own arrow keys.
+    if (target?.closest('[role="tablist"]') && event.key.startsWith('Arrow')) return;
     switch (event.key) {
       case 'MediaPlayPause': player.toggle(); break;
       case 'MediaTrackNext': player.next(); break;

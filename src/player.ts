@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// The player: one media element, the queue, and what the viewer asked for
-// (playing or not). The element is the source of truth for time and duration;
-// `playing` is the viewer's intent, which survives a track change.
-import { useCallback, useEffect, useState, type RefObject, type SyntheticEvent } from 'react';
+// The player: one media element driven by the playback reducer (playback.ts).
+// The element is the source of truth for time and duration; the reducer holds
+// the queue and the viewer's intent.
+import { useCallback, useEffect, useReducer, useRef, useState, type RefObject, type SyntheticEvent } from 'react';
 
-import {
-  advance, appendItems, back, createQueue, current, jump, nextRepeat, setRepeat, setShuffle, type Queue, type Repeat,
-} from './queue.js';
+import { initialPlayback, playbackReducer } from './playback.js';
+import { current, type Queue, type Repeat } from './queue.js';
 import type { Track } from './track.js';
 
 /** Back within this many seconds of the start goes to the previous track; later, it restarts this one. */
@@ -25,8 +24,10 @@ export interface Player {
   duration: number | null;
   /** Durations learned so far, by track id. Civitai does not list them up front. */
   durations: ReadonlyMap<number, number>;
-  /** The id of a track that failed to load, while it is current. */
-  failed: number | null;
+  /** The current track would not load; it is about to be skipped. */
+  failed: boolean;
+  /** Nothing in the queue would load. Play tries them all again. */
+  stuck: boolean;
   volume: number;
   muted: boolean;
 
@@ -39,7 +40,8 @@ export interface Player {
   toggle: () => void;
   next: () => void;
   previous: () => void;
-  jumpTo: (at: number) => void;
+  /** Plays the track with this id. */
+  jumpTo: (id: number) => void;
   seek: (seconds: number) => void;
   /** Seeks relative to now, in seconds. */
   seekBy: (seconds: number) => void;
@@ -69,13 +71,13 @@ export interface PlayerStart {
 
 export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
   { shuffle = true, repeat = 'all', volume: startVolume = 1, muted: startMuted = false }: PlayerStart = {}): Player {
-  const [queue, setQueue] = useState<Queue<Track>>(() => createQueue<Track>([], { shuffle, repeat }));
-  const [playing, setPlaying] = useState(false);
+  const [state, dispatch] = useReducer(playbackReducer, { shuffle, repeat }, initialPlayback);
+  const { queue, playing, restarts, failed, stuck } = state;
   const [time, setTime] = useState(0);
   const [durations, setDurations] = useState<ReadonlyMap<number, number>>(() => new Map());
-  const [failed, setFailed] = useState<number | null>(null);
   const [volume, setVolume] = useState(startVolume);
   const [muted, setMuted] = useState(startMuted);
+
   // The element starts at full volume; give it the remembered one, once.
   const [start] = useState({ volume: startVolume, muted: startMuted });
   useEffect(() => {
@@ -88,61 +90,73 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
   const track = current(queue);
   const trackId = track?.id ?? null;
 
-  // Keep the element in step with the intent. A new track starts from the top;
-  // play() is refused until the viewer has clicked inside the app once.
-  useEffect(() => {
-    const media = mediaRef.current;
-    if (!media || trackId == null) return;
-    if (playing && media.paused) {
-      media.play().catch((error: unknown) => {
-        // AbortError: the source changed under the request; the next run retries.
-        if (error instanceof DOMException && error.name === 'NotAllowedError') setPlaying(false);
-      });
-    } else if (!playing && !media.paused) {
-      media.pause();
-    }
-  }, [mediaRef, playing, trackId]);
-
-  // A failed track is skipped while playing, after a moment.
-  useEffect(() => {
-    if (failed == null || !playing) return;
-    const timer = setTimeout(() => {
-      setQueue(q => (current(q)?.id === failed ? advance(q) ?? q : q));
-    }, SKIP_FAILED_MS);
-    return () => clearTimeout(timer);
-  }, [failed, playing]);
-
-  const resetTrackState = useCallback(() => {
-    setTime(0);
-    setFailed(null);
+  /** A refused play() means the browser wants a click first: show Play again. */
+  const onRefused = useCallback((error: unknown) => {
+    // AbortError: the source changed under the request; the effect below retries.
+    if (error instanceof DOMException && error.name === 'NotAllowedError') dispatch({ type: 'pause' });
   }, []);
 
-  const changeQueue = useCallback((update: (q: Queue<Track>) => Queue<Track> | null) => {
-    setQueue(q => {
-      const next = update(q);
-      return next ?? q;
-    });
-    resetTrackState();
-  }, [resetTrackState]);
-
-  const restart = useCallback(() => {
+  // Keep the element in step with the track and the intent.
+  const shownRef = useRef<{ id: number; url: string; restarts: number } | null>(null);
+  useEffect(() => {
     const media = mediaRef.current;
     if (!media) return;
-    media.currentTime = 0;
-    setPlaying(true);
-    void media.play().catch(() => {});
-  }, [mediaRef]);
-
-  const next = useCallback(() => {
-    const following = advance(queue);
-    if (!following) {
-      // The end of the queue with repeat off: stay on the last track, stopped.
-      setPlaying(false);
+    if (!track) {
+      // Nothing to play: stop, and drop what the element still holds.
+      shownRef.current = null;
+      media.pause();
+      if (media.currentSrc) {
+        media.removeAttribute('src');
+        media.load();
+      }
       return;
     }
-    if (current(following)?.id === trackId) restart();
-    else changeQueue(() => following);
-  }, [queue, trackId, restart, changeQueue]);
+    const shown = shownRef.current;
+    if (shown && shown.id !== track.id && shown.url === track.url) {
+      // Another track, the same file: React leaves the element alone, so start
+      // it over, which also announces its duration for this track.
+      media.load();
+    } else if (shown?.id === track.id && shown.restarts !== restarts) {
+      media.currentTime = 0;
+    }
+    shownRef.current = { id: track.id, url: track.url, restarts };
+    if (playing && media.paused) media.play().catch(onRefused);
+    else if (!playing && !media.paused) media.pause();
+  }, [mediaRef, track, playing, restarts, onRefused]);
+
+  // A new track starts at zero on screen too.
+  const [timeFor, setTimeFor] = useState(trackId);
+  if (timeFor !== trackId) {
+    setTimeFor(trackId);
+    setTime(0);
+  }
+
+  // A failed track is skipped while playing, after a moment.
+  const isFailed = trackId != null && failed.has(trackId);
+  useEffect(() => {
+    if (!isFailed || !playing || trackId == null) return;
+    const timer = setTimeout(() => dispatch({ type: 'skipFailed', id: trackId }), SKIP_FAILED_MS);
+    return () => clearTimeout(timer);
+  }, [isFailed, playing, trackId]);
+
+  /**
+   * Play. Called from a click or key press, it also starts the element right
+   * there, inside the gesture, as stricter browsers require.
+   */
+  const play = useCallback(() => {
+    dispatch({ type: 'play' });
+    const media = mediaRef.current;
+    if (media && media.paused && media.currentSrc && !stuck) media.play().catch(onRefused);
+  }, [mediaRef, stuck, onRefused]);
+
+  const pause = useCallback(() => dispatch({ type: 'pause' }), []);
+
+  const seek = useCallback((seconds: number) => {
+    const media = mediaRef.current;
+    if (!media || !Number.isFinite(media.duration)) return;
+    media.currentTime = Math.min(Math.max(0, seconds), media.duration);
+    setTime(media.currentTime);
+  }, [mediaRef]);
 
   const previous = useCallback(() => {
     const media = mediaRef.current;
@@ -150,19 +164,7 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
       media.currentTime = 0;
       return;
     }
-    const before = back(queue);
-    if (current(before)?.id === trackId) {
-      if (media) media.currentTime = 0;
-    } else {
-      changeQueue(() => before);
-    }
-  }, [mediaRef, queue, trackId, changeQueue]);
-
-  const seek = useCallback((seconds: number) => {
-    const media = mediaRef.current;
-    if (!media || !Number.isFinite(media.duration)) return;
-    media.currentTime = Math.min(Math.max(0, seconds), media.duration);
-    setTime(media.currentTime);
+    dispatch({ type: 'back' });
   }, [mediaRef]);
 
   const changeVolume = useCallback((value: number) => {
@@ -179,28 +181,23 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
     time,
     duration: trackId == null ? null : durations.get(trackId) ?? null,
     durations,
-    failed: failed === trackId ? failed : null,
+    failed: isFailed,
+    stuck,
     volume,
     muted,
 
-    load: tracks => {
-      setQueue(q => createQueue(tracks, { shuffle: q.shuffle, repeat: q.repeat }));
-      resetTrackState();
-    },
-    append: tracks => setQueue(q => appendItems(q, tracks)),
-    play: () => setPlaying(true),
-    pause: () => setPlaying(false),
-    toggle: () => setPlaying(on => !on),
-    next,
+    load: tracks => dispatch({ type: 'load', tracks }),
+    append: tracks => dispatch({ type: 'append', tracks }),
+    play,
+    pause,
+    toggle: () => (playing ? pause() : play()),
+    next: () => dispatch({ type: 'next' }),
     previous,
-    jumpTo: at => {
-      changeQueue(q => jump(q, at));
-      setPlaying(true);
-    },
+    jumpTo: useCallback((id: number) => dispatch({ type: 'jump', id }), []),
     seek,
     seekBy: seconds => seek((mediaRef.current?.currentTime ?? 0) + seconds),
-    toggleShuffle: () => setQueue(q => setShuffle(q, !q.shuffle)),
-    cycleRepeat: () => setQueue(q => setRepeat(q, nextRepeat(q.repeat))),
+    toggleShuffle: () => dispatch({ type: 'shuffle' }),
+    cycleRepeat: () => dispatch({ type: 'repeat' }),
     setVolume: changeVolume,
     toggleMute: () => {
       const media = mediaRef.current;
@@ -209,17 +206,12 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
       if (!media.muted && media.volume === 0) media.volume = 0.5;
     },
     mediaProps: {
-      onPlay: () => setPlaying(true),
+      onPlay: () => dispatch({ type: 'play' }),
       // The element pauses itself just before `ended`; that is not the viewer pausing.
       onPause: event => {
-        if (!event.currentTarget.ended) setPlaying(false);
+        if (!event.currentTarget.ended) dispatch({ type: 'pause' });
       },
-      onEnded: () => {
-        const following = advance(queue, { auto: true });
-        if (!following) setPlaying(false);
-        else if (current(following)?.id === trackId) restart();
-        else changeQueue(() => following);
-      },
+      onEnded: () => dispatch({ type: 'ended' }),
       onTimeUpdate: event => setTime(event.currentTarget.currentTime),
       onDurationChange: event => {
         const { duration } = event.currentTarget;
@@ -230,8 +222,9 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
         setVolume(event.currentTarget.volume);
         setMuted(event.currentTarget.muted);
       },
-      onError: () => setFailed(trackId),
+      onError: () => {
+        if (trackId != null) dispatch({ type: 'failed', id: trackId });
+      },
     },
   };
 }
-
