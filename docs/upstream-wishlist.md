@@ -92,3 +92,19 @@ store in the tunnel.
 
 **Want:** expose the preview mode through `blocks-react` and support the SDK's
 local preview store from that bridge.
+
+### 8. Source and support links from the manifest at submit
+
+**Today:** `civitai app submit` fills the new draft listing's name, tagline,
+description and category from `block.manifest.json`, but leaves "Source
+repository" and "Issue tracker" empty, although the manifest declares
+`repository` and `bugs`. The CLI refuses to set the source link for an on-site
+app ("comes from the `repository` key in block.manifest.json") and has no
+command for the issue tracker, while the web listing editor offers both as
+editable fields. The docs say both reach the listing on approval. Songstream
+0.2.0's draft needed them filled in by hand in the web editor.
+
+**Want:** `repository` and `bugs` copied into the draft at submit like the
+other manifest fields, one owner for them (manifest or editor, the same in the
+CLI and the web UI), and docs saying when each manifest field reaches the
+listing. Reported as `324-de9b088f`.
