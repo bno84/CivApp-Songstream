@@ -23,7 +23,7 @@ const CLIPS = [
 
 const CREATORS = ['driftcat', 'tidewright', 'hushmoth', 'fernhollow', 'saltglass', 'emberloom', 'oakandash', 'lunaforge'];
 const TITLES = ['Neon Rain on Mars', 'Lo-fi lighthouse', 'Paper moons', 'Static garden', 'Glass harbour', 'Ember waltz',
-  'Moth radio', 'Copper skies', 'Tidal hymn', 'Pixel dusk', 'Quiet circuit', 'Juniper byte',
+  'Moth lantern', 'Copper skies', 'Tidal hymn', 'Pixel dusk', 'Quiet circuit', 'Juniper byte',
   // Titles that test the layout: a pasted prompt, no break opportunities, emoji only.
   'An extremely long post title that keeps going well past the width of the column, because some creators paste their whole prompt into the title field',
   'ThisTitleHasNoSpacesAtAllAndJustKeepsGoingWithoutAnyBreakOpportunity_v2_final_FINAL',

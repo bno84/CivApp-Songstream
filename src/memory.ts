@@ -14,11 +14,11 @@ import type { Repeat } from './queue.js';
 import { asTrack, type Track } from './track.js';
 
 export const FAVORITES_ID = 'favorites';
-export type StationId = number | typeof FAVORITES_ID;
+export type PlaylistId = number | typeof FAVORITES_ID;
 
 export interface Prefs {
   /** The playlist that was playing; `null` for the featured one. */
-  station: StationId | null;
+  playlist: PlaylistId | null;
   volume: number;
   muted: boolean;
   shuffle: boolean;
@@ -26,7 +26,7 @@ export interface Prefs {
 }
 
 /** A collection opened by link, enough to list it again. */
-export interface RecentStation {
+export interface RecentPlaylist {
   id: number;
   name: string;
 }
@@ -37,11 +37,11 @@ export interface Memory {
   /** Merges a change into the settings. Writes are batched, so a slider can call it freely. */
   savePrefs: (change: Partial<Prefs>) => void;
   /** Collections opened by link, most recent first. Never rejects. */
-  recent: () => Promise<RecentStation[]>;
+  recent: () => Promise<RecentPlaylist[]>;
   /** Writes any settings change still waiting, now. */
   flush: () => Promise<void>;
   /** Puts a collection at the front of the recent list, or renames it there. */
-  remember: (station: RecentStation) => Promise<void>;
+  remember: (playlist: RecentPlaylist) => Promise<void>;
   forget: (id: number) => Promise<void>;
   /** Starred tracks, newest first. */
   favorites: () => Promise<Track[]>;
@@ -49,7 +49,7 @@ export interface Memory {
   setFavorite: (track: Track, starred: boolean) => Promise<boolean>;
 }
 
-export const DEFAULT_PREFS: Prefs = { station: null, volume: 1, muted: false, shuffle: true, repeat: 'all' };
+export const DEFAULT_PREFS: Prefs = { playlist: null, volume: 1, muted: false, shuffle: true, repeat: 'all' };
 
 /** How many collections opened by link are kept. */
 export const RECENT_LIMIT = 8;
@@ -65,9 +65,9 @@ export function asPrefs(data: unknown): Prefs {
   const value = (data && typeof data === 'object' ? data : {}) as Partial<Record<keyof Prefs, unknown>>;
   const volume = typeof value.volume === 'number' && value.volume >= 0 && value.volume <= 1 ? value.volume : DEFAULT_PREFS.volume;
   return {
-    station: value.station === FAVORITES_ID ||
-      (typeof value.station === 'number' && Number.isSafeInteger(value.station) && value.station > 0)
-      ? value.station : null,
+    playlist: value.playlist === FAVORITES_ID ||
+      (typeof value.playlist === 'number' && Number.isSafeInteger(value.playlist) && value.playlist > 0)
+      ? value.playlist : null,
     volume,
     muted: typeof value.muted === 'boolean' ? value.muted : DEFAULT_PREFS.muted,
     shuffle: typeof value.shuffle === 'boolean' ? value.shuffle : DEFAULT_PREFS.shuffle,
@@ -75,8 +75,8 @@ export function asPrefs(data: unknown): Prefs {
   };
 }
 
-function asRecent(data: unknown): RecentStation | null {
-  const value = data as Partial<RecentStation> | null;
+function asRecent(data: unknown): RecentPlaylist | null {
+  const value = data as Partial<RecentPlaylist> | null;
   if (!value || !Number.isSafeInteger(value.id) || (value.id as number) <= 0 || typeof value.name !== 'string') return null;
   return { id: value.id!, name: value.name.slice(0, 200) };
 }
@@ -87,7 +87,7 @@ function warn(what: string, error: unknown) {
 }
 
 /** `first` ahead of `rest`, one entry per collection, at most {@link RECENT_LIMIT}. */
-function mergeRecent(first: RecentStation[], rest: RecentStation[]): RecentStation[] {
+function mergeRecent(first: RecentPlaylist[], rest: RecentPlaylist[]): RecentPlaylist[] {
   const seen = new Set<number>();
   return [...first, ...rest].filter(entry => !seen.has(entry.id) && seen.add(entry.id)).slice(0, RECENT_LIMIT);
 }
@@ -102,7 +102,7 @@ export function createMemory(storage: DocumentStorage | Promise<DocumentStorage 
     return null;
   }).then(client => client && {
     prefs: client.collection<Prefs>('prefs'),
-    recent: client.collection<RecentStation>('recent_collections'),
+    recent: client.collection<RecentPlaylist>('recent_collections'),
     favorites: client.collection<Track>('favorites'),
   });
 
@@ -139,11 +139,11 @@ export function createMemory(storage: DocumentStorage | Promise<DocumentStorage 
   }
 
   // Recent links: what this visit opened or forgot, ahead of (and over) the store.
-  let recent: RecentStation[] = [];
+  let recent: RecentPlaylist[] = [];
   const forgotten = new Set<number>();
   let recentLoad: Promise<void> | null = null;
 
-  async function loadRecent(): Promise<RecentStation[]> {
+  async function loadRecent(): Promise<RecentPlaylist[]> {
     const store = (await stores)?.recent;
     if (!store) return [];
     try {
@@ -211,12 +211,12 @@ export function createMemory(storage: DocumentStorage | Promise<DocumentStorage 
       await writePrefs();
     },
 
-    remember: station => {
-      forgotten.delete(station.id);
-      recent = mergeRecent([station], recent);
+    remember: playlist => {
+      forgotten.delete(playlist.id);
+      recent = mergeRecent([playlist], recent);
       return stores.then(async found => {
         try {
-          await found?.recent.put(key(station.id), station);
+          await found?.recent.put(key(playlist.id), playlist);
         } catch (error) {
           warn('remember the collection', error);
         }

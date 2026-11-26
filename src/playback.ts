@@ -9,14 +9,14 @@ import {
   advance, appendItems, back, createQueue, current, jump, nextRepeat, removeItem, setRepeat, setShuffle, type Queue, type Repeat,
 } from './queue.js';
 import type { Track } from './track.js';
-import type { StationId } from './memory.js';
+import type { PlaylistId } from './memory.js';
 
 export interface PlaybackState {
   queue: Queue<Track>;
-  station: StationId | null;
+  playlist: PlaylistId | null;
   pending: Queue<Track> | null;
-  pendingStation: StationId | null;
-  cached: ReadonlyMap<StationId, Queue<Track>>;
+  pendingPlaylist: PlaylistId | null;
+  cached: ReadonlyMap<PlaylistId, Queue<Track>>;
   defaultShuffle: boolean;
   /** The viewer's intent; it survives a track change. */
   playing: boolean;
@@ -29,7 +29,7 @@ export interface PlaybackState {
 }
 
 export type PlaybackAction =
-  | { type: 'load'; tracks: readonly Track[]; station?: StationId; complete?: boolean }
+  | { type: 'load'; tracks: readonly Track[]; playlist?: PlaylistId; complete?: boolean }
   | { type: 'cancelPending' }
   | { type: 'append'; tracks: readonly Track[] }
   | { type: 'remove'; id: number }
@@ -48,7 +48,7 @@ export type PlaybackAction =
 
 export function initialPlayback({ shuffle = true, repeat = 'all' }: { shuffle?: boolean; repeat?: Repeat } = {}): PlaybackState {
   return {
-    queue: createQueue<Track>([], { shuffle, repeat }), station: null, pending: null, pendingStation: null,
+    queue: createQueue<Track>([], { shuffle, repeat }), playlist: null, pending: null, pendingPlaylist: null,
     cached: new Map(), defaultShuffle: shuffle, playing: false, restarts: 0, failed: new Set(), stuck: false,
   };
 }
@@ -74,14 +74,14 @@ function moveTo(state: PlaybackState, next: Queue<Track> | null): PlaybackState 
   return { ...state, queue: next };
 }
 
-function cacheQueue(state: PlaybackState, station: StationId | null, queue: Queue<Track>): ReadonlyMap<StationId, Queue<Track>> {
-  return station == null ? state.cached : new Map(state.cached).set(station, queue);
+function cacheQueue(state: PlaybackState, playlist: PlaylistId | null, queue: Queue<Track>): ReadonlyMap<PlaylistId, Queue<Track>> {
+  return playlist == null ? state.cached : new Map(state.cached).set(playlist, queue);
 }
 
 function startPending(state: PlaybackState, pending: Queue<Track>): PlaybackState {
   return {
-    ...moveTo(state, pending), station: state.pendingStation, pending: null, pendingStation: null,
-    cached: cacheQueue(state, state.station, advance(state.queue) ?? state.queue),
+    ...moveTo(state, pending), playlist: state.pendingPlaylist, pending: null, pendingPlaylist: null,
+    cached: cacheQueue(state, state.playlist, advance(state.queue) ?? state.queue),
     failed: new Set(), stuck: false,
     playing: state.playing && pending.order.length > 0,
   };
@@ -91,10 +91,10 @@ export function playbackReducer(state: PlaybackState, action: PlaybackAction): P
   const { queue, pending, failed } = state;
   switch (action.type) {
     case 'load': {
-      const station = action.station ?? null;
-      const alreadyActive = station != null && station === state.station;
-      const alreadyPending = station != null && station === state.pendingStation;
-      const cached = alreadyActive ? queue : alreadyPending ? pending : station == null ? undefined : state.cached.get(station);
+      const playlist = action.playlist ?? null;
+      const alreadyActive = playlist != null && playlist === state.playlist;
+      const alreadyPending = playlist != null && playlist === state.pendingPlaylist;
+      const cached = alreadyActive ? queue : alreadyPending ? pending : playlist == null ? undefined : state.cached.get(playlist);
       let incoming = cached
         ? appendItems(setRepeat(cached, queue.repeat), action.tracks)
         : createQueue(action.tracks, { shuffle: state.defaultShuffle, repeat: queue.repeat });
@@ -107,15 +107,15 @@ export function playbackReducer(state: PlaybackState, action: PlaybackAction): P
       if (alreadyActive) return incoming === queue ? state : { ...state, queue: incoming };
       if (alreadyPending) return incoming === pending ? state : { ...state, pending: incoming };
       const id = currentId(queue);
-      if (state.playing && id != null && !failed.has(id)) return { ...state, pending: incoming, pendingStation: station };
+      if (state.playing && id != null && !failed.has(id)) return { ...state, pending: incoming, pendingPlaylist: playlist };
       return {
-        ...state, queue: incoming, station, pending: null, pendingStation: null,
-        cached: cacheQueue(state, state.station, queue), failed: new Set(), stuck: false,
+        ...state, queue: incoming, playlist, pending: null, pendingPlaylist: null,
+        cached: cacheQueue(state, state.playlist, queue), failed: new Set(), stuck: false,
       };
     }
     case 'cancelPending':
       return pending ? {
-        ...state, cached: cacheQueue(state, state.pendingStation, pending), pending: null, pendingStation: null,
+        ...state, cached: cacheQueue(state, state.pendingPlaylist, pending), pending: null, pendingPlaylist: null,
       } : state;
     case 'append': {
       if (pending) return { ...state, pending: appendItems(pending, action.tracks) };

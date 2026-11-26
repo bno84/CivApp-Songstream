@@ -1,5 +1,5 @@
 {
-  "name": "civradio",
+  "name": "songstream",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -49,6 +49,6 @@
   "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bno84/CivApp-CivRadio.git"
+    "url": "git+https://github.com/bno84/CivApp-Songstream.git"
   }
 }

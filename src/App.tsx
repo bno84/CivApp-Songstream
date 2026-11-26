@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useBlockContext, useBlockResize, useRequestSignIn } from '@civitai/blocks-react';
 
 import type { ApiClient } from './api.js';
-import { Radio } from './components/Radio.js';
+import { Songstream } from './components/Songstream.js';
 import { SourceNote } from './components/SourceNote.js';
 import type { Memory } from './memory.js';
 
@@ -21,7 +21,7 @@ export function App({ api, memory }: { api: ApiClient; memory: Memory }) {
 
   let body;
   if (!ready) {
-    body = <div className="center-note"><p>Tuning in…</p><SourceNote /></div>;
+    body = <div className="center-note"><p>Loading…</p><SourceNote /></div>;
   } else if (!viewer) {
     body = (
       <div className="center-note">
@@ -31,7 +31,7 @@ export function App({ api, memory }: { api: ApiClient; memory: Memory }) {
       </div>
     );
   } else {
-    body = <Radio api={api} memory={memory} />;
+    body = <Songstream api={api} memory={memory} />;
   }
 
   return (

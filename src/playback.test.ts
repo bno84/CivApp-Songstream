@@ -22,10 +22,10 @@ const now = (state: PlaybackState) => current(state.queue)?.id ?? null;
 describe('playbackReducer', () => {
   it('plays the clicked track from the selected playlist while another video is still playing', () => {
     const state = run(initialPlayback({ shuffle: false }),
-      { type: 'load', station: 1, tracks: tracks(1, 2) }, { type: 'play' },
-      { type: 'load', station: 'favorites', tracks: tracks(3, 2) });
+      { type: 'load', playlist: 1, tracks: tracks(1, 2) }, { type: 'play' },
+      { type: 'load', playlist: 'favorites', tracks: tracks(3, 2) });
     const switched = run(state, { type: 'jump', id: 2 });
-    expect(switched.station).toBe('favorites');
+    expect(switched.playlist).toBe('favorites');
     expect(switched.pending).toBeNull();
     expect(switched.playing).toBe(true);
     expect(now(switched)).toBe(2);
@@ -33,8 +33,8 @@ describe('playbackReducer', () => {
 
   it('keeps the current video and queues later pages for the incoming playlist', () => {
     const state = run(initialPlayback({ shuffle: false, repeat: 'one' }),
-      { type: 'load', station: 1, tracks: tracks(1, 2) }, { type: 'play' },
-      { type: 'load', station: 'favorites', tracks: tracks(3) }, { type: 'append', tracks: tracks(4) });
+      { type: 'load', playlist: 1, tracks: tracks(1, 2) }, { type: 'play' },
+      { type: 'load', playlist: 'favorites', tracks: tracks(3) }, { type: 'append', tracks: tracks(4) });
     expect(now(state)).toBe(1);
     expect(state.queue.items.map(track => track.id)).toEqual([1, 2]);
     const switched = run(state, { type: 'ended' });
@@ -44,12 +44,12 @@ describe('playbackReducer', () => {
   });
 
   it('keeps both shuffle orders when switching away and back before the video ends', () => {
-    const first = run(initialPlayback(), { type: 'load', station: 1, tracks: tracks(1, 2, 3) }, { type: 'play' },
-      { type: 'load', station: 'favorites', tracks: tracks(4, 5, 6) });
-    const back = run(first, { type: 'cancelPending' }, { type: 'load', station: 1, tracks: tracks(1, 2, 3) });
+    const first = run(initialPlayback(), { type: 'load', playlist: 1, tracks: tracks(1, 2, 3) }, { type: 'play' },
+      { type: 'load', playlist: 'favorites', tracks: tracks(4, 5, 6) });
+    const back = run(first, { type: 'cancelPending' }, { type: 'load', playlist: 1, tracks: tracks(1, 2, 3) });
     expect(back.queue).toBe(first.queue);
     expect(back.pending).toBeNull();
-    const favorites = run(back, { type: 'load', station: 'favorites', tracks: tracks(4, 5, 6), complete: true });
+    const favorites = run(back, { type: 'load', playlist: 'favorites', tracks: tracks(4, 5, 6), complete: true });
     expect(favorites.pending).toBe(first.pending);
     const unshuffled = run(favorites, { type: 'shuffle' });
     expect(unshuffled.pending?.shuffle).toBe(false);
@@ -59,9 +59,9 @@ describe('playbackReducer', () => {
 
   it('refreshes cached favorites without putting unstarred tracks back in the queue', () => {
     const state = run(initialPlayback({ shuffle: false }),
-      { type: 'load', station: 'favorites', tracks: tracks(1, 2, 3), complete: true },
-      { type: 'load', station: 10, tracks: tracks(10) },
-      { type: 'load', station: 'favorites', tracks: tracks(4, 3, 2), complete: true });
+      { type: 'load', playlist: 'favorites', tracks: tracks(1, 2, 3), complete: true },
+      { type: 'load', playlist: 10, tracks: tracks(10) },
+      { type: 'load', playlist: 'favorites', tracks: tracks(4, 3, 2), complete: true });
     expect(state.queue.items.map(track => track.id)).toEqual([2, 3, 4]);
   });
 

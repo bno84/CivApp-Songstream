@@ -25,11 +25,11 @@ describe('createMemory', () => {
     const first = visit();
     expect(await first.prefs()).toEqual(DEFAULT_PREFS);
     first.savePrefs({ volume: 0.4 });
-    first.savePrefs({ station: 101, shuffle: false });
-    expect(await first.prefs()).toMatchObject({ volume: 0.4, station: 101, shuffle: false });
+    first.savePrefs({ playlist: 101, shuffle: false });
+    expect(await first.prefs()).toMatchObject({ volume: 0.4, playlist: 101, shuffle: false });
     await first.flush();
 
-    expect(await visit().prefs()).toEqual({ ...DEFAULT_PREFS, volume: 0.4, station: 101, shuffle: false });
+    expect(await visit().prefs()).toEqual({ ...DEFAULT_PREFS, volume: 0.4, playlist: 101, shuffle: false });
   });
 
   it('keeps a change made before the settings had loaded', async () => {
@@ -64,11 +64,11 @@ describe('createMemory', () => {
     const visit = visits();
     const first = visit();
     for (let id = 1; id <= 51; id++) expect(await first.setFavorite(track(id), true)).toBe(true);
-    first.savePrefs({ station: FAVORITES_ID });
+    first.savePrefs({ playlist: FAVORITES_ID });
     await first.flush();
 
     const next = visit();
-    expect((await next.prefs()).station).toBe(FAVORITES_ID);
+    expect((await next.prefs()).playlist).toBe(FAVORITES_ID);
     expect((await next.favorites()).map(({ id }) => id)).toEqual(Array.from({ length: 51 }, (_, i) => 51 - i));
   });
 
@@ -108,6 +108,6 @@ describe('createMemory', () => {
 });
 
 it('asPrefs falls back field by field', () => {
-  expect(asPrefs({ volume: 7, muted: 'yes', repeat: 'sometimes', station: -1, shuffle: false })).toEqual({ ...DEFAULT_PREFS, shuffle: false });
+  expect(asPrefs({ volume: 7, muted: 'yes', repeat: 'sometimes', playlist: -1, shuffle: false })).toEqual({ ...DEFAULT_PREFS, shuffle: false });
   expect(asPrefs(null)).toEqual(DEFAULT_PREFS);
 });

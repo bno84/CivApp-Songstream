@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { version } from '../../block.manifest.json';
 
-const SOURCE_URL = 'https://github.com/bno84/CivApp-CivRadio';
+const SOURCE_URL = 'https://github.com/bno84/CivApp-Songstream';
 
 /**
  * AGPL-3.0 §13: offer the source to everyone who uses the app. The sandbox

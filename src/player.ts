@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState, type RefObject, type SyntheticEvent } from 'react';
 
 import { initialPlayback, playbackReducer } from './playback.js';
-import type { StationId } from './memory.js';
+import type { PlaylistId } from './memory.js';
 import { current, type Queue, type Repeat } from './queue.js';
 import type { Track } from './track.js';
 
@@ -18,9 +18,9 @@ export const SEEK_STEP = 5;
 
 export interface Player {
   queue: Queue<Track>;
-  station: StationId | null;
+  playlist: PlaylistId | null;
   pending: Queue<Track> | null;
-  cached: ReadonlyMap<StationId, Queue<Track>>;
+  cached: ReadonlyMap<PlaylistId, Queue<Track>>;
   track: Track | null;
   playing: boolean;
   time: number;
@@ -36,7 +36,7 @@ export interface Player {
   muted: boolean;
 
   /** Switches playlists after the current track if it's playing, or immediately if paused. */
-  load: (station: StationId, tracks: readonly Track[], complete?: boolean) => void;
+  load: (playlist: PlaylistId, tracks: readonly Track[], complete?: boolean) => void;
   cancelPending: () => void;
   /** Adds tracks that arrived later (the next page of a collection). */
   append: (tracks: readonly Track[]) => void;
@@ -78,7 +78,7 @@ export interface PlayerStart {
 export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
   { shuffle = true, repeat = 'all', volume: startVolume = 1, muted: startMuted = false }: PlayerStart = {}): Player {
   const [state, dispatch] = useReducer(playbackReducer, { shuffle, repeat }, initialPlayback);
-  const { queue, station, pending, playing, restarts, failed, stuck } = state;
+  const { queue, playlist, pending, playing, restarts, failed, stuck } = state;
   const [time, setTime] = useState(0);
   const [durations, setDurations] = useState<ReadonlyMap<number, number>>(() => new Map());
   const [volume, setVolume] = useState(startVolume);
@@ -182,7 +182,7 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
 
   return {
     queue,
-    station,
+    playlist,
     pending,
     cached: state.cached,
     track,
@@ -195,7 +195,7 @@ export function usePlayer(mediaRef: RefObject<HTMLVideoElement | null>,
     volume,
     muted,
 
-    load: (station, tracks, complete) => dispatch({ type: 'load', station, tracks, complete }),
+    load: (playlist, tracks, complete) => dispatch({ type: 'load', playlist, tracks, complete }),
     cancelPending: () => dispatch({ type: 'cancelPending' }),
     append: useCallback((tracks: readonly Track[]) => dispatch({ type: 'append', tracks }), []),
     remove: useCallback((id: number) => dispatch({ type: 'remove', id }), []),

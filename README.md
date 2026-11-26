@@ -1,6 +1,6 @@
 # Songstream
 
-Play Civitai video collections like music playlists. Tune in to Music Focus,
+Play Civitai video collections like music playlists. Start with Music Focus,
 pick one of your own collections, or paste a public collection link. Shuffle
 the queue, star tracks for later, and control playback with your media keys.
 

@@ -100,14 +100,14 @@ button:disabled {
   background: var(--bg);
 }
 
-.radio {
+.songstream {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
 }
 
-.radio-main {
+.songstream-main {
   display: grid;
   flex: 1;
   grid-template-columns: minmax(0, 1fr) 400px;
@@ -149,9 +149,9 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
-/* -- Stations ------------------------------------------------------------- */
+/* -- Playlists ------------------------------------------------------------ */
 
-.station-bar {
+.playlist-bar {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -168,7 +168,7 @@ button:disabled {
   color: var(--accent);
 }
 
-.stations {
+.playlists {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -227,13 +227,13 @@ button:disabled {
   color: var(--text);
 }
 
-.add-station {
+.add-playlist {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.add-station input {
+.add-playlist input {
   width: 260px;
   padding: 5px 12px;
   border: 1px solid var(--line);
@@ -599,12 +599,12 @@ button.pill:hover {
   flex: none;
 }
 
-.station-status {
+.playlist-status {
   color: var(--dim);
   font-size: 12px;
 }
 
-.station-status.error {
+.playlist-status.error {
   color: var(--accent-text);
 }
 
@@ -877,7 +877,7 @@ button.pill:hover {
 /* Below 1024px the panel narrows; below 768px everything stacks and the page
    scrolls as one. Container queries ask about the frame, not the viewport. */
 @container app (max-width: 1024px) {
-  .radio-main {
+  .songstream-main {
     grid-template-columns: minmax(0, 1fr) 320px;
   }
 
@@ -889,31 +889,31 @@ button.pill:hover {
     min-height: 100dvh;
   }
 
-  .radio {
+  .songstream {
     flex: none;
   }
 
-  .station-bar {
+  .playlist-bar {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     gap: 8px 14px;
   }
 
-  .station-bar .source-note {
+  .playlist-bar .source-note {
     grid-column: 2;
     grid-row: 1;
     text-align: right;
   }
 
-  .station-bar .source-url {
+  .playlist-bar .source-url {
     display: block;
   }
 
-  .stations {
+  .playlists {
     grid-column: 1 / -1;
   }
 
-  .stations .chip {
+  .playlists .chip {
     min-width: 0;
     max-width: 100%;
     overflow-wrap: anywhere;
@@ -922,7 +922,7 @@ button.pill:hover {
   }
 
   .chip-group,
-  .add-station {
+  .add-playlist {
     max-width: 100%;
   }
 
@@ -930,11 +930,11 @@ button.pill:hover {
     flex: none;
   }
 
-  .add-station {
+  .add-playlist {
     flex-wrap: wrap;
   }
 
-  .add-station input {
+  .add-playlist input {
     width: 180px;
     min-width: 0;
   }
@@ -943,7 +943,7 @@ button.pill:hover {
     flex-basis: 100%;
   }
 
-  .radio-main {
+  .songstream-main {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;
   }
