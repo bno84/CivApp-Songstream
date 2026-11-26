@@ -3,7 +3,7 @@
 
 export type MediaType = 'image' | 'video' | 'audio';
 
-/** Media Civitai Radio can play. Collections serve images and videos; images are skipped. */
+/** Media Songstream can play. Collections serve images and videos; images are skipped. */
 export const isPlayable = (type: MediaType) => type === 'video' || type === 'audio';
 
 const CDN_HOST = /(^|\.)civitai\.com$/;

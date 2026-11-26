@@ -1,4 +1,4 @@
-# Civitai Radio
+# Songstream
 
 Play Civitai video collections like music playlists. Tune in to Music Focus,
 pick one of your own collections, or paste a public collection link. Shuffle
@@ -31,7 +31,7 @@ the queue, star tracks for later, and control playback with your media keys.
   up to eight collections you opened by link (hover one to forget it). Only you
   can see them.
 
-Browsing and saving Favorites need no consent prompt. Radio asks for
+Browsing and saving Favorites need no consent prompt. Songstream asks for
 `social:react:self` when you first tap a reaction. Remembering starts working
 once Civitai approves the app. Until then, favorites and settings last for the
 current visit.
@@ -71,7 +71,7 @@ reloads.
 
 Copyright (C) 2026 bno84 and contributors.
 
-Civitai Radio is free software under the
+Songstream is free software under the
 [GNU Affero General Public License v3.0 or later](LICENSE). If you run a
 modified version for others, including as a Civitai App, you must offer
 those users its source under the same license.

@@ -1,6 +1,6 @@
 # Upstream wishlist
 
-What Civitai Radio needs from Civitai's app platform. Each item says what the
+What Songstream needs from Civitai's app platform. Each item says what the
 app does today, what is missing, and what would close the gap.
 
 Current surface, with the scope `collections:read:self`:
@@ -34,7 +34,7 @@ consent-gated scope to post one.
 
 ### 2. A page app frame that fits the screen
 
-**Today:** Radio fits the player to the visible area. It measures the frame
+**Today:** Songstream fits the player to the visible area. It measures the frame
 with an IntersectionObserver and estimates the height of Civitai's bottom bar.
 The estimate can leave small layout and scrolling issues. The host ignores
 resize requests from page apps and passes no visible height.
@@ -54,7 +54,7 @@ frames, and the `allow` list documented.
 ### 4. Playlists the app can build
 
 **Today:** apps can follow collections but cannot create one or change its
-items. Radio lets viewers star tracks in a private app document store as a
+items. Songstream lets viewers star tracks in a private app document store as a
 stop-gap for a Favorites playlist.
 
 **Want:** a consent-gated scope to create a collection and add or remove items,
@@ -74,7 +74,7 @@ works without it.
 
 ### 6. Public generation resource credits
 
-**Today:** Radio can show resources listed in public image metadata.
+**Today:** Songstream can show resources listed in public image metadata.
 Civitai's item page can show additional credits from its generation-data
 service. For example, video 148146593 shows two checkpoints and a workflow on
 its item page, while the public images endpoint returns an empty
@@ -87,7 +87,7 @@ App API, including resources the creator added by hand.
 
 **Today:** tunnel tokens omit storage scopes. The SDK's built-in local preview
 needs the host's `storageMode` from its own bridge, which `blocks-react` does
-not expose. Radio uses one host bridge and supplies a manifest-backed fake
+not expose. Songstream uses one host bridge and supplies a manifest-backed fake
 store in the tunnel.
 
 **Want:** expose the preview mode through `blocks-react` and support the SDK's

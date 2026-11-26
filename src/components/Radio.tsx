@@ -268,7 +268,7 @@ function RadioPlayer({ api, memory, start }: { api: ApiClient; memory: Memory; s
   }, [infos, track, upcoming]);
 
   const info = track ? infos.get(track.id) : undefined;
-  const title = track ? trackTitle(track, info?.status === 'ready' ? info.title : null) : 'Civitai Radio';
+  const title = track ? trackTitle(track, info?.status === 'ready' ? info.title : null) : 'Songstream';
   const station = stations.find(entry => entry.id === selected);
   const playingStation = stations.find(entry => entry.id === player.station);
   const showingActiveQueue = selected === player.station;

@@ -45,7 +45,7 @@
       "onFail": "download"
     }
   },
-  "description": "Civitai Radio: a Civitai app that feels like a music player. Media control button support, playlists, shuffle.",
+  "description": "Songstream: a Civitai app that feels like a music player. Media control button support, playlists, shuffle.",
   "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",

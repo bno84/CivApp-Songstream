@@ -28,7 +28,7 @@ export function useMediaSession(player: Player, { title, album }: { title: strin
     if (!media || typeof MediaMetadata === 'undefined') return;
     try {
       media.metadata = track ? new MediaMetadata({
-        title, artist, album: album ?? 'Civitai Radio',
+        title, artist, album: album ?? 'Songstream',
         artwork: artwork ? [{ src: artwork, sizes: '450x450' }] : [],
       }) : null;
     } catch {

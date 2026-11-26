@@ -12,7 +12,7 @@
 - Run locally with `pnpm run dev:harness` (mock host). Plain `pnpm run dev`
   waits forever for a `BLOCK_INIT`.
 - `@civitai/blocks-react` is the host bridge (context, token, resize, harness).
-  The app does NOT call `injectBlocksStyles()`: Civitai Radio has its own look,
+  The app does NOT call `injectBlocksStyles()`: Songstream has its own look,
   not the design-system pack's. Keep the host theme (`data-theme`) working.
 - `src/api.ts` is the only network code. Collection items come from
   `GET /api/v1/blocks/collections/{id}` with `collections:read:self`; the

@@ -254,7 +254,7 @@ function toError(response: Response): ApiError {
     case 403:
       return new ApiError(403, 'Civitai refused access to this content.');
     case 404:
-      return new ApiError(404, 'That collection does not exist, or it is private. Civitai Radio plays public collections and your own public ones.');
+      return new ApiError(404, 'That collection does not exist, or it is private. Songstream plays public collections and your own public ones.');
     case 429:
       return new ApiError(429, 'Civitai asked the app to slow down. Try again in a moment.',
         parseRetryAfter(response.headers.get('Retry-After')));

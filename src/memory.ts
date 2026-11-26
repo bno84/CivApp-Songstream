@@ -83,7 +83,7 @@ function asRecent(data: unknown): RecentStation | null {
 
 function warn(what: string, error: unknown) {
   // eslint-disable-next-line no-console -- the viewer loses nothing but persistence
-  console.warn(`Civitai Radio: could not ${what}; it is kept for this visit only.`, error);
+  console.warn(`Songstream: could not ${what}; it is kept for this visit only.`, error);
 }
 
 /** `first` ahead of `rest`, one entry per collection, at most {@link RECENT_LIMIT}. */

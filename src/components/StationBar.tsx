@@ -40,7 +40,7 @@ export function StationBar({ stations, selected, onSelect, onOpen, onForget, sta
 
   return (
     <header className="station-bar">
-      <span className="brand">Civitai <b>Radio</b></span>
+      <span className="brand"><b>Song</b>stream</span>
       <nav className="stations" aria-label="Playlists">
         {stations.map(station => {
           const chip = (

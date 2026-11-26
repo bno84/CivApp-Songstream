@@ -11,7 +11,7 @@ import { createMemory } from './memory.js';
 import { fitToVisibleHeight } from './viewport.js';
 import './index.css';
 
-// No injectBlocksStyles(): Civitai Radio has its own look rather than the
+// No injectBlocksStyles(): Songstream has its own look rather than the
 // design-system pack's. blocks-react is used for the host bridge only.
 
 /** The real API, on the validated host origin, with the host-minted block token. */
