@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useState } from 'react';
 
-import { ReactionError, useBlockToken, useConsentUnavailable, useReactions, useRequestConsent } from '@civitai/blocks-react';
+import {
+  ReactionError, useBlockToken, useConsentUnavailable, useReactions, useRequestConsent,
+  type BlockEntityReactionErrorCode,
+} from '@civitai/blocks-react';
 
 import type { Info } from '../info.js';
 import { formatCount } from '../media.js';
@@ -17,6 +20,17 @@ const REACTIONS = [
   ['Cry', 'cryCount', '😢', 'cries'],
 ] as const;
 const REACT_SCOPE = 'social:react:self';
+// What each reaction error code means to a viewer. The host also answers
+// `entity-unavailable` when reactions from apps are switched off site-wide.
+const REACTION_ERRORS: Record<BlockEntityReactionErrorCode, string> = {
+  'invalid-request': 'Civitai did not accept this reaction request.',
+  'sign-in-required': 'Sign in to Civitai to react.',
+  'review-mode': 'Reactions are off while the app is in review.',
+  'not-ready': 'Civitai reactions are not ready yet. Try again in a moment.',
+  'needs-consent': 'Allow Civitai reactions to react from here.',
+  'entity-unavailable': 'Civitai is not taking reactions from apps on this video right now.',
+  'rate-limited': 'Civitai’s reaction limit has been reached. Try again later.',
+};
 
 /** Title, creator, reaction counts and the ways out to Civitai, under the video. */
 export function NowPlaying({ track, title, info, reactTicket, starred, toggleFavorite }: {
@@ -47,7 +61,7 @@ export function NowPlaying({ track, title, info, reactTicket, starred, toggleFav
   const unavailableReason = permissionUnavailable ? 'Civitai cannot grant reaction permission in this session'
     : granted && !reactionState && reactTicket
       ? reactions.loading ? 'Loading your Civitai reactions'
-        : reactions.error?.code ? `Civitai could not load your reactions (${reactions.error.code})`
+        : reactions.error?.code ? REACTION_ERRORS[reactions.error.code]
           : 'Civitai did not return your reactions for this video'
       : null;
   return (
@@ -87,8 +101,8 @@ export function NowPlaying({ track, title, info, reactTicket, starred, toggleFav
                 }
                 void reactions.toggle(track.id, reaction, !reacted).catch((reason: unknown) => {
                   if (reason instanceof ReactionError && reason.needsConsent) requestPermission();
-                  else setFailure({ id: track.id, text: reason instanceof ReactionError && reason.code === 'rate-limited'
-                    ? 'Civitai’s reaction limit has been reached.' : 'Could not update your reaction.' });
+                  else setFailure({ id: track.id, text: reason instanceof ReactionError && reason.code
+                    ? REACTION_ERRORS[reason.code] : 'Could not update your reaction.' });
                 });
               }}>
               {contents}
