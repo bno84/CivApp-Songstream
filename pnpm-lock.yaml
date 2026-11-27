@@ -110,14 +110,14 @@ importers:
   .:
     dependencies:
       '@civitai/app-sdk':
-        specifier: ^0.92.0
-        version: 0.92.0(vite@8.3.7)
+        specifier: ^0.96.0
+        version: 0.96.0(vite@8.3.7)
       '@civitai/blocks-react':
-        specifier: ^0.85.1
-        version: 0.85.1(@civitai/app-sdk@0.92.0(vite@8.3.7))(@civitai/sdk@0.29.1)(react@19.3.1)
+        specifier: ^0.88.0
+        version: 0.88.0(@civitai/app-sdk@0.96.0(vite@8.3.7))(@civitai/sdk@0.34.0)(react@19.3.1)
       '@civitai/sdk':
-        specifier: 0.29.1
-        version: 0.29.1
+        specifier: 0.34.0
+        version: 0.34.0
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -126,8 +126,8 @@ importers:
         version: 19.3.1(react@19.3.1)
     devDependencies:
       '@civitai/cli':
-        specifier: ^0.1.152
-        version: 0.1.152
+        specifier: ^0.1.154
+        version: 0.1.154
       '@eslint-react/eslint-plugin':
         specifier: 5.28.8
         version: 5.28.8(eslint@10.14.0)(typescript@6.0.3)
@@ -246,8 +246,8 @@ packages:
   '@cacheable/utils@2.5.0':
     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
 
-  '@civitai/app-sdk@0.92.0':
-    resolution: {integrity: sha512-fB38Uk+F/UOtAp7d1p8XZDhBga8s1sZGVvuUMf9Qd95Y0e8JiN+8pTgQ25QbH37e/Qy1JQNREFsffZeBsfXT2w==}
+  '@civitai/app-sdk@0.96.0':
+    resolution: {integrity: sha512-yzIGxfAALSJdS5Pjyx2wc1Lq8BI7HnqIGZpOnYCQebxJu6l0VifffPUKIuuEvdq0K7ovZ8NIiShBA8iEXJJZ7g==}
     engines: {node: '>=20'}
     peerDependencies:
       '@civitai/client': ^0.2.0-beta.98
@@ -261,20 +261,20 @@ packages:
       vite:
         optional: true
 
-  '@civitai/blocks-react@0.85.1':
-    resolution: {integrity: sha512-LLt16lJKqwaRKfCzqbArLoOQYA73R0VTlK1/U7AWigUuu0eJnF64soRuKHWO3CyGoY5I4WNdSiUm3iCRHvOyNA==}
+  '@civitai/blocks-react@0.88.0':
+    resolution: {integrity: sha512-Vqk8NqaGNxc+hqrJI1WQpzb6RbhXnTfr7t6vqw8NbQ6IAQTyQUTz5wVTiGLvRfWp1IPyDh9Ke9Gz4XLKjWHqWg==}
     engines: {node: '>=20'}
     peerDependencies:
       '@civitai/app-sdk': '>=0.57.0 <1.0.0'
       react: ^18.0.0 || ^19.0.0
 
-  '@civitai/cli-linux-x64@0.1.152':
-    resolution: {integrity: sha512-P2MR5Ld/CynNPHKj/eKs2Wv7gtNs1g+w/0p+17GlJAW1M2X3aSFL9LWfI9q2QqAgghGYsPPRHe5io0gNu9LNDQ==}
+  '@civitai/cli-linux-x64@0.1.154':
+    resolution: {integrity: sha512-LK6hwqWgEzfO9nNr1uPcEZVH7fLeZQaZLYq3w0C9KJKUvmTRAxNb1FX1WQxhyqVJS5a4C8eGM3Seod2SSMMV8Q==}
     cpu: [x64]
     os: [linux]
 
-  '@civitai/cli@0.1.152':
-    resolution: {integrity: sha512-bu99L81Puf3768ZI+9M2HtEqhobFkSArP30lrw+lqxAAB0w8gh4VXPxmqJpStxcK5qi7YwZ89nZ75d2rID6pzg==}
+  '@civitai/cli@0.1.154':
+    resolution: {integrity: sha512-QVL4YRZHdCVI+ObOLmpcv/DrBpWc44J33PNULwFcbE7VNCsvnYogswT5d4enn0AlGiClihPZyj3vYUKU9QCfgQ==}
     engines: {node: '>=18'}
     cpu: [x64, arm64]
     os: [linux, darwin, win32]
@@ -293,8 +293,8 @@ packages:
     resolution: {integrity: sha512-VRF+6UIQIXNBDsEBQle3xnAHKVCgT51QB1Bn+lu4aMKPRQOCHj3oJMxleuVO5DsS4gS73/3mnx3knc33JHws/A==}
     engines: {git: '>=2.11.0', node: '>=18.0.0', npm: '>=7.19.0', yarn: '>=1.7.0'}
 
-  '@civitai/sdk@0.29.1':
-    resolution: {integrity: sha512-eCldSJYfLA2I8lMuavUK3XU8wYr3ao89u7UTHpf0kQCtYrfuXCEyNG8yjx9sont3m8RJ6GEp97C1ofDSzuc+hg==}
+  '@civitai/sdk@0.34.0':
+    resolution: {integrity: sha512-fYl9heGYopHxGuBoJ5ZnmUjPJ5btYpz5QSXghSjtzCKHIo5/wPSMx1VUVg61DTiHXccI3xX6pXgvWuqAkb/Yug==}
     engines: {node: '>=20'}
 
   '@civitai/theme@0.5.2':
@@ -1569,32 +1569,32 @@ snapshots:
       hashery: 1.5.1
       keyv: 5.6.0
 
-  '@civitai/app-sdk@0.92.0(vite@8.3.7)':
+  '@civitai/app-sdk@0.96.0(vite@8.3.7)':
     optionalDependencies:
       vite: 8.3.7
 
-  '@civitai/blocks-react@0.85.1(@civitai/app-sdk@0.92.0(vite@8.3.7))(@civitai/sdk@0.29.1)(react@19.3.1)':
+  '@civitai/blocks-react@0.88.0(@civitai/app-sdk@0.96.0(vite@8.3.7))(@civitai/sdk@0.34.0)(react@19.3.1)':
     dependencies:
-      '@civitai/app-sdk': 0.92.0(vite@8.3.7)
-      '@civitai/components': 0.13.1(@civitai/sdk@0.29.1)
+      '@civitai/app-sdk': 0.96.0(vite@8.3.7)
+      '@civitai/components': 0.13.1(@civitai/sdk@0.34.0)
       '@civitai/theme': 0.5.2
       react: 19.3.1
     transitivePeerDependencies:
       - '@civitai/sdk'
 
-  '@civitai/cli-linux-x64@0.1.152':
+  '@civitai/cli-linux-x64@0.1.154':
     optional: true
 
-  '@civitai/cli@0.1.152':
+  '@civitai/cli@0.1.154':
     optionalDependencies:
-      '@civitai/cli-linux-x64': 0.1.152
+      '@civitai/cli-linux-x64': 0.1.154
 
-  '@civitai/components@0.13.1(@civitai/sdk@0.29.1)':
+  '@civitai/components@0.13.1(@civitai/sdk@0.34.0)':
     dependencies:
       '@civitai/theme': 0.5.2
       lit: 3.3.3
     optionalDependencies:
-      '@civitai/sdk': 0.29.1
+      '@civitai/sdk': 0.34.0
 
   '@civitai/orchestration-client@0.2.8':
     dependencies:
@@ -1602,7 +1602,7 @@ snapshots:
       rfc6902: 5.5.0
       tslib: 2.9.1
 
-  '@civitai/sdk@0.29.1':
+  '@civitai/sdk@0.34.0':
     dependencies:
       '@civitai/orchestration-client': 0.2.8
 

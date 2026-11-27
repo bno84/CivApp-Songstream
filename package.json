@@ -14,14 +14,14 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@civitai/app-sdk": "^0.92.0",
-    "@civitai/blocks-react": "^0.85.1",
-    "@civitai/sdk": "0.29.1",
+    "@civitai/app-sdk": "^0.96.0",
+    "@civitai/blocks-react": "^0.88.0",
+    "@civitai/sdk": "0.34.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@civitai/cli": "^0.1.152",
+    "@civitai/cli": "^0.1.154",
     "@eslint-react/eslint-plugin": "5.28.8",
     "@eslint/css": "2.0.1",
     "@eslint/js": "10.0.1",
