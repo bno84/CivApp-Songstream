@@ -108,3 +108,16 @@ editable fields. The docs say both reach the listing on approval. Songstream
 other manifest fields, one owner for them (manifest or editor, the same in the
 CLI and the web UI), and docs saying when each manifest field reaches the
 listing. Reported as `324-de9b088f`.
+
+### 9. A reaction error code for "reactions from apps are off"
+
+**Today:** with reactions from apps switched off site-wide, the host's
+`blocks.getReactionsForApp` call answers 403 "reactions from apps are not
+enabled", and `useReactions` reports it as `entity-unavailable`, the same code
+as a single image the viewer cannot react to. Songstream can only say "not
+taking reactions from apps on this video right now", and keeps the reaction
+buttons in place on every video.
+
+**Want:** a distinct code (for example `disabled`) in `ENTITY_REACTION_ERRORS`,
+or a flag the app can read up front, so an app can hide or explain the
+reaction controls once instead of failing per video.
