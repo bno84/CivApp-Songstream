@@ -56,6 +56,8 @@
   design-system look.
 - Commits use conventional commit titles. Do not push, add a remote, submit the
   app or send platform feedback without the owner's explicit approval.
+- Releases follow [docs/releasing.md](docs/releasing.md), including what to do
+  when Civitai staff push a platform update and submits start failing with 409.
 
 <!-- BEGIN civitai agent-setup — managed block, edits here are overwritten -->
 ## Building a Civitai App

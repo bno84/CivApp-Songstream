@@ -121,3 +121,20 @@ buttons in place on every video.
 **Want:** a distinct code (for example `disabled`) in `ENTITY_REACTION_ERRORS`,
 or a flag the app can read up front, so an app can hide or explain the
 reaction controls once instead of failing per video.
+
+### 10. Staff platform updates that do not block the next release
+
+**Today:** a platform update from Civitai staff
+(`apu_01M8FJDMT4CG6CSNYP7CVE79FW`, an SDK bump) blocks every submit with 409
+until a version containing its files unchanged is approved. Songstream already
+had the same SDK versions, plus later dev-tooling bumps, so its lockfile was
+refused. Only one submission can be pending, so the update had to ship alone
+as 0.2.1, with the real release (0.2.2) waiting for a second review. The
+`--allow-unmerged-platform-update` flag that the 409 names is not in CLI
+0.1.154 or 0.1.155, and none of this is in the docs. See
+[releasing.md](releasing.md).
+
+**Want:** treat an update as merged when its dependency versions are in the
+bundle, ship the flag that the error names, and document platform updates
+(where they live, how to merge them, what blocks a submit). Reported as
+`332-0cff4496`.
