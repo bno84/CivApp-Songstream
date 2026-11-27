@@ -4,7 +4,7 @@ Play Civitai video collections like music playlists. Start with Music Focus,
 pick one of your own collections, or paste a public collection link. Shuffle
 the queue, star tracks for later, and control playback with your media keys.
 
-**Status:** in development, tried inside Civitai through the dev tunnel.
+**Status:** [live on Civitai](https://civitai.com/apps/run/songstream). Civitai Apps are still in beta, so it only opens for accounts in the apps testing group.
 
 ## Features
 
