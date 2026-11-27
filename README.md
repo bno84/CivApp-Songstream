@@ -32,9 +32,8 @@ the queue, star tracks for later, and control playback with your media keys.
   can see them.
 
 Browsing and saving Favorites need no consent prompt. Songstream asks for
-`social:react:self` when you first tap a reaction. Remembering starts working
-once Civitai approves the app. Until then, favorites and settings last for the
-current visit.
+`social:react:self` when you first tap a reaction. If Civitai's store cannot
+be reached, favorites and settings last for the current visit.
 
 ## Limits
 
